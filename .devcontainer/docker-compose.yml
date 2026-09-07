@@ -1,0 +1,31 @@
+#################
+# SERVICES
+#################
+services:
+  # Developer environment
+  devenv:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    # platform: linux/amd64  
+    # uncomment this for x86_64 machines
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - CAI_MODEL=${CAI_MODEL}
+      - CAI_AGENT_TYPE=${CAI_AGENT_TYPE}
+      # Privacy-preserving defaults for local models. To enable configured trace
+      # export, set CAI_TRACING=true and OPENAI_AGENTS_DISABLE_TRACING=false.
+      - CAI_TRACING=${CAI_TRACING:-false}
+      - OPENAI_AGENTS_DISABLE_TRACING=${OPENAI_AGENTS_DISABLE_TRACING:-true}
+    volumes:
+      # Mount the root folder that contains .git
+      - ..:/workspace:cached
+  
+    command: /bin/sh -c "while sleep 10; do :; done"
+    networks:
+      cainet:
+    
+
+
+networks:
+  cainet:

@@ -1,0 +1,90 @@
+{
+  "framework_signals": {
+    "express": ["\\bexpress\\b", "\\bapp\\.use\\(", "\\brouter\\."],
+    "flask": ["\\bflask\\b", "\\b@app\\.route\\("],
+    "django": ["\\bdjango\\b", "\\burlpatterns\\b", "\\bpath\\("],
+    "fastapi": ["\\bfastapi\\b", "@(?:app|router)\\.(?:get|post|put|patch|delete)"],
+    "spring": ["@RestController", "@Controller", "@RequestMapping", "@GetMapping", "@PostMapping"],
+    "rails": ["\\bRails\\b", "config\\.routes\\.draw", "resources\\s+:"],
+    "laravel": ["\\bLaravel\\b", "Route::(?:get|post|put|delete|patch)"]
+  },
+  "database_signals": {
+    "mongodb": ["\\bmongo(?:db|ose)?\\b", "mongodb(?:\\+srv)?://"],
+    "postgresql": ["\\bpostgres(?:ql)?\\b", "\\bpsycopg2\\b", "jdbc:postgresql:"],
+    "mysql": ["\\bmysql\\b", "\\bmariadb\\b", "jdbc:mysql:"],
+    "sqlite": ["\\bsqlite(?:3)?\\b"],
+    "redis": ["\\bredis\\b", "\\bioredis\\b", "redis://"]
+  },
+  "feature_signals": {
+    "user_input": [
+      "request\\.(?:args|form|json|values|query|body)",
+      "req\\.(?:query|body|params)",
+      "params\\[",
+      "query\\[",
+      "\\binput\\(",
+      "\\$_(?:GET|POST|REQUEST)"
+    ],
+    "login": ["\\blogin\\b", "\\bsignin\\b", "\\bauth(?:enticate)?\\b", "\\btoken\\b", "\\bjwt\\b", "\\bsession\\b"],
+    "cookie_auth": ["\\bcookie\\b", "set-cookie", "express-session", "session\\["],
+    "file_upload": ["\\bupload\\b", "multipart", "\\bmulter\\b", "request\\.files", "\\bIFormFile\\b", "\\bFormFile\\b"],
+    "no_auth": ["auth\\s*=\\s*false", "permitAll\\(", "AllowAnonymous", "authentication\\s+disabled"]
+  },
+  "vulnerability_signals": {
+    "sqli": {
+      "source": ["req\\.(?:query|body|params)", "request\\.(?:args|form|json|values|query|body)", "\\$_(?:GET|POST|REQUEST)"],
+      "sink": ["SELECT\\s+.+\\s+FROM", "INSERT\\s+INTO", "UPDATE\\s+\\w+\\s+SET", "cursor\\.execute\\(", "executeQuery\\(", "\\$queryRaw", "\\.query\\("]
+    },
+    "nosql_injection": {
+      "source": ["req\\.(?:query|body|params)", "request\\.(?:json|body)", "\\$_(?:GET|POST|REQUEST)"],
+      "sink": ["\\$where", "\\$ne", "\\$gt", "\\$regex", "findOne\\(", "find\\(", "aggregate\\("]
+    },
+    "cmdi": {
+      "source": ["req\\.(?:query|body|params)", "request\\.(?:args|form|json|values|query|body)"],
+      "sink": ["child_process\\.(?:exec|execSync|spawn)", "subprocess\\.(?:Popen|run|call)", "Runtime\\.getRuntime\\(\\)\\.exec", "ProcessBuilder\\("]
+    },
+    "ssrf": {
+      "source": ["req\\.(?:query|body|params)", "url\\s*=\\s*req\\.", "uri\\s*=\\s*req\\.", "request\\.(?:args|query|json|body)"],
+      "sink": ["axios\\.(?:get|post|request)", "fetch\\(", "requests\\.(?:get|post|request)", "httpx\\.(?:get|post|request)", "HttpClient\\.", "URL\\.openConnection\\("]
+    },
+    "xss": {
+      "source": ["req\\.(?:query|body|params)", "request\\.(?:args|form|json|values|query|body)", "\\$_(?:GET|POST|REQUEST)"],
+      "sink": ["res\\.(?:send|write)", "innerHTML\\s*=", "dangerouslySetInnerHTML", "ModelAndView\\(", "Th\\:utext"]
+    },
+    "path_traversal": {
+      "source": ["req\\.(?:query|body|params)", "request\\.(?:args|form|json|values|query|body)", "\\$_(?:GET|POST|REQUEST)"],
+      "sink": ["fs\\.(?:readFile|readFileSync|createReadStream)", "open\\(", "StreamReader\\(", "FileInputStream\\(", "Path\\.join\\(", "os\\.path\\.join\\("]
+    },
+    "auth_bypass": {
+      "sink": ["permitAll\\(", "AllowAnonymous", "noAuth", "auth\\s*=\\s*false", "if\\s*\\(\\s*true\\s*\\)\\s*\\{\\s*//\\s*auth"]
+    },
+    "idor": {
+      "source": ["\\b(?:user|account|order|doc|record|project)_?id\\b", "\\bid\\b\\s*[=:]\\s*req\\.", "params\\.(?:id|userId|accountId)"],
+      "sink": ["findById\\(", "findOne\\(", "getById\\(", "SELECT\\s+.+\\s+WHERE\\s+id\\s*="]
+    },
+    "upload_vuln": {
+      "source": ["upload\\.", "multipart", "request\\.files", "IFormFile", "FormFile", "multer"],
+      "sink": ["move_uploaded_file\\(", "fs\\.(?:writeFile|createWriteStream)", "save\\(", "transferTo\\(", "FileOutputStream\\("]
+    },
+    "deserialization": {
+      "source": ["req\\.(?:body|query|params)", "request\\.(?:json|body)", "\\$_(?:POST|REQUEST)"],
+      "sink": ["pickle\\.loads\\(", "yaml\\.load\\(", "ObjectInputStream\\(", "BinaryFormatter\\(", "deserialize\\("]
+    },
+    "xxe": {
+      "sink": ["DocumentBuilderFactory\\.newInstance\\(", "SAXParserFactory\\.newInstance\\(", "XMLInputFactory\\.newFactory\\(", "lxml\\.etree\\.fromstring\\("]
+    },
+    "ssti": {
+      "source": ["req\\.(?:query|body|params)", "request\\.(?:args|query|json|body)"],
+      "sink": ["render_template_string\\(", "Jinja2\\(", "res\\.render\\(", "Thymeleaf", "FreeMarker"]
+    }
+  },
+  "api_route_patterns": [
+    "\\b(?:app|router)\\.(get|post|put|patch|delete)\\s*\\(\\s*[\"']([^\"']+)",
+    "@(?:app|router)\\.(get|post|put|patch|delete)\\s*\\(\\s*[\"']([^\"']+)",
+    "@(Get|Post|Put|Patch|Delete)Mapping\\s*\\(\\s*[\"']?([^\"')\\s]+)"
+  ],
+  "port_patterns": {
+    "dockerfile_expose": "\\bEXPOSE\\s+(\\d{2,5})\\b",
+    "compose_mapping": "(?<!\\d)(\\d{2,5})\\s*:\\s*(\\d{2,5})(?:/\\w+)?",
+    "env_port": "\\bPORT\\s*[=:]\\s*[\"']?(\\d{2,5})"
+  }
+}

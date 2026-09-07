@@ -1,0 +1,1 @@
+{"type": "vars_global", "rule_id": "enterprise_T0814_min_stub", "bounded": ["H"], "unbounded": [], "head_vars": ["H"], "body_vars": ["H"], "anonymous_present": true}

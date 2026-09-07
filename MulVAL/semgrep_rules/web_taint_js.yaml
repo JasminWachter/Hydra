@@ -1,0 +1,247 @@
+rules:
+  # --- Command injection: request input reaches a shell exec ---
+  - id: js-cmdi-user-input-to-shell
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: User-controlled input reaches an OS command (command injection).
+    metadata:
+      vuln_class: cmdi
+      cwe: "CWE-78"
+    mode: taint
+    pattern-sources:
+      - pattern: req.query
+      - pattern: req.body
+      - pattern: req.params
+      - pattern: req.cookies
+      - pattern: req.headers
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(child_process\.exec|child_process\.execSync|child_process\.spawn|exec|execSync|spawn)$
+
+  # --- SSRF: request input reaches a server-side HTTP fetcher ---
+  - id: js-ssrf-user-input-to-fetcher
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: User-controlled input reaches a server-side fetch (SSRF).
+    metadata:
+      vuln_class: ssrf
+      cwe: "CWE-918"
+    mode: taint
+    pattern-sources:
+      - pattern: req.query
+      - pattern: req.body
+      - pattern: req.params
+      - pattern: req.cookies
+      - pattern: req.headers
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(axios\.get|axios\.post|axios|fetch|http\.get|https\.get|request|got)$
+
+  # --- LFI / path traversal: request input reaches a file read ---
+  - id: js-lfi-user-input-to-fs
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: User-controlled input reaches a file read (LFI / path traversal).
+    metadata:
+      vuln_class: path_traversal
+      cwe: "CWE-22"
+    mode: taint
+    pattern-sources:
+      - pattern: req.query
+      - pattern: req.body
+      - pattern: req.params
+      - pattern: req.cookies
+      - pattern: req.headers
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(fs\.readFile|fs\.readFileSync|fs\.createReadStream|res\.sendFile)$
+
+  # --- SQL injection: request input reaches a raw query call ---
+  - id: js-sqli-user-input-to-query
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: User-controlled input reaches a database query (SQL injection).
+    metadata:
+      vuln_class: sqli
+      cwe: "CWE-89"
+    mode: taint
+    pattern-sources:
+      - pattern: req.query
+      - pattern: req.body
+      - pattern: req.params
+      - pattern: req.cookies
+      - pattern: req.headers
+    pattern-sinks:
+      - patterns:
+          - pattern: $DB.$M(...)
+          - metavariable-regex:
+              metavariable: $M
+              regex: ^(query|raw)$
+
+  # --- XSS: request input reaches a response body without escaping ---
+  - id: js-xss-user-input-to-response
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: User-controlled input reaches the response body without escaping (XSS).
+    metadata:
+      vuln_class: xss
+      cwe: "CWE-79"
+    mode: taint
+    pattern-sources:
+      - pattern: req.query
+      - pattern: req.body
+      - pattern: req.params
+      - pattern: req.cookies
+      - pattern: req.headers
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(res\.send|res\.write|res\.end)$
+      - pattern: res.render(...)
+
+  # --- XSS: page-controlled input (URL/DOM) reaches an HTML sink (DOM XSS) ---
+  - id: js-xss-dom-input-to-html-sink
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Page-controlled input reaches an HTML sink without escaping (DOM XSS).
+    metadata:
+      vuln_class: xss
+      cwe: "CWE-79"
+    mode: taint
+    pattern-sources:
+      - pattern: location.search
+      - pattern: location.hash
+      - pattern: document.URL
+      - pattern: document.location
+      - pattern: window.location
+    pattern-sinks:
+      - pattern: $EL.innerHTML = $X
+      - pattern: $EL.outerHTML = $X
+      - pattern: document.write(...)
+      - pattern: $EL.insertAdjacentHTML(...)
+
+  # --- XXE: request input reaches an XML parser ---
+  - id: js-xxe-user-input-to-xml-parser
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: User-controlled input reaches an XML parser (XXE).
+    metadata:
+      vuln_class: xxe
+      cwe: "CWE-611"
+    mode: taint
+    pattern-sources:
+      - pattern: req.query
+      - pattern: req.body
+      - pattern: req.params
+      - pattern: req.cookies
+      - pattern: req.headers
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(libxmljs\.parseXml|xml2js\.parseString|parseString)$
+
+  # --- SSTI: request input reaches a template render call ---
+  - id: js-ssti-user-input-to-render
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: User-controlled input reaches a template render (SSTI).
+    metadata:
+      vuln_class: ssti
+      cwe: "CWE-1336"
+    mode: taint
+    pattern-sources:
+      - pattern: req.query
+      - pattern: req.body
+      - pattern: req.params
+      - pattern: req.cookies
+      - pattern: req.headers
+    pattern-sinks:
+      - pattern: res.render(...)
+
+  # --- Insecure deserialization: request input reaches an unsafe deserializer ---
+  - id: js-deserialization-user-input-to-unserialize
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: User-controlled input reaches an unsafe deserializer (insecure deserialization).
+    metadata:
+      vuln_class: deserialization
+      cwe: "CWE-502"
+    mode: taint
+    pattern-sources:
+      - pattern: req.query
+      - pattern: req.body
+      - pattern: req.params
+      - pattern: req.cookies
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(unserialize|node_serialize\.unserialize|serialize\.unserialize)$
+
+  # --- Prototype pollution: user-controlled object merged into a target (structural) ---
+  - id: js-prototype-pollution-merge
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: User-controlled object merged into a target may pollute __proto__ (prototype pollution).
+    metadata:
+      vuln_class: prototype_pollution
+      cwe: "CWE-1321"
+    patterns:
+      - pattern-either:
+          - pattern: _.merge($DST, req.$SRC, ...)
+          - pattern: _.mergeWith($DST, req.$SRC, ...)
+          - pattern: _.defaultsDeep($DST, req.$SRC, ...)
+          - pattern: lodash.merge($DST, req.$SRC, ...)
+          - pattern: $.extend(true, $DST, req.$SRC, ...)
+          - pattern: Object.assign($DST, req.$SRC, ...)
+          - pattern: $OBJ[$K] = req.$SRC[$K2]
+
+  # ==========================================================================
+  # Tier-2 heuristic rules (evidence_tier: heuristic) — dangerous sink shape,
+  # no proven dataflow. See web_taint_python.yaml for the rationale.
+  # ==========================================================================
+  - id: js-heuristic-cmdi-template-command
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: Template-literal / concatenated command passed to a shell exec (possible command injection).
+    metadata:
+      vuln_class: cmdi
+      evidence_tier: heuristic
+      cwe: "CWE-78"
+    patterns:
+      - pattern-either:
+          - pattern: child_process.exec(`...`, ...)
+          - pattern: child_process.execSync(`...`, ...)
+          - pattern: exec(`...`, ...)
+          - pattern: execSync(`...`, ...)
+          - pattern: child_process.exec("..." + $X, ...)
+          - pattern: exec("..." + $X, ...)
+
+  - id: js-heuristic-sqli-template-query
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: Template-literal / concatenated SQL passed to a query call (possible SQL injection).
+    metadata:
+      vuln_class: sqli
+      evidence_tier: heuristic
+      cwe: "CWE-89"
+    patterns:
+      - pattern-either:
+          - pattern: $DB.query(`...`, ...)
+          - pattern: $DB.query("..." + $X, ...)
+          - pattern: $DB.raw(`...`, ...)
+          - pattern: $DB.raw("..." + $X, ...)

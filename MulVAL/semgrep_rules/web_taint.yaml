@@ -1,0 +1,253 @@
+rules:
+  # --- SSRF: user input reaches a server-side fetcher (shell browser/curl/wget or php fetch) ---
+  - id: ssrf-user-input-to-fetcher
+    languages: [php]
+    severity: ERROR
+    message: User-controlled input reaches a server-side fetch (SSRF).
+    metadata:
+      vuln_class: ssrf
+      cwe: "CWE-918"
+    mode: taint
+    pattern-sources:
+      - pattern: $_GET
+      - pattern: $_POST
+      - pattern: $_REQUEST
+      - pattern: $_COOKIE
+    pattern-sinks:
+      # shelling out to a browser/http client with tainted data (SSRF, not cmdi:
+      # escapeshellarg neutralises metachars but not the URL semantics)
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(exec|shell_exec|system|passthru|popen|proc_open)$
+      # php-native fetchers
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(file_get_contents|curl_exec|fopen|readfile)$
+
+  # --- Command injection: tainted input into a shell exec without shell-escaping ---
+  - id: cmdi-user-input-to-shell
+    languages: [php]
+    severity: ERROR
+    message: User-controlled input reaches an OS command (command injection).
+    metadata:
+      vuln_class: cmdi
+      cwe: "CWE-78"
+    mode: taint
+    pattern-sources:
+      - pattern: $_GET
+      - pattern: $_POST
+      - pattern: $_REQUEST
+    pattern-sanitizers:
+      - pattern: escapeshellarg(...)
+      - pattern: escapeshellcmd(...)
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(exec|shell_exec|system|passthru|popen|proc_open)$
+
+  # --- LFI / path traversal: tainted input into include/file read ---
+  - id: lfi-user-input-to-include
+    languages: [php]
+    severity: ERROR
+    message: User-controlled input reaches a file include/read (LFI / path traversal).
+    metadata:
+      vuln_class: path_traversal
+      cwe: "CWE-22"
+    mode: taint
+    pattern-sources:
+      - pattern: $_GET
+      - pattern: $_POST
+      - pattern: $_REQUEST
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(include|include_once|require|require_once|readfile|file_get_contents|fopen)$
+
+  # --- XSS: tainted input echoed into the response without escaping ---
+  - id: xss-user-input-to-echo
+    languages: [php]
+    severity: ERROR
+    message: User-controlled input is echoed into the response without escaping (XSS).
+    metadata:
+      vuln_class: xss
+      cwe: "CWE-79"
+    mode: taint
+    pattern-sources:
+      - pattern: $_GET
+      - pattern: $_POST
+      - pattern: $_REQUEST
+      - pattern: $_COOKIE
+    pattern-sanitizers:
+      - pattern: htmlspecialchars(...)
+      - pattern: htmlentities(...)
+      - pattern: strip_tags(...)
+    pattern-sinks:
+      - pattern: echo $X;
+      - pattern: print $X;
+      - pattern: printf(...)
+
+  # --- XXE: tainted input (including uploaded file content) reaches an XML parser ---
+  - id: xxe-user-input-to-xml-parser
+    languages: [php]
+    severity: ERROR
+    message: User-controlled input reaches an XML parser (XXE).
+    metadata:
+      vuln_class: xxe
+      cwe: "CWE-611"
+    mode: taint
+    pattern-sources:
+      - pattern: $_GET
+      - pattern: $_POST
+      - pattern: $_REQUEST
+      - pattern: $_FILES
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(simplexml_load_string|simplexml_load_file|xml_parse|xml_parse_into_struct)$
+      - pattern: $DOC->loadXML(...)
+      - pattern: $DOC->load(...)
+
+  # --- Auth bypass: loose (type-juggling) comparison against a hash/digest value ---
+  - id: auth-bypass-loose-hash-comparison
+    languages: [php]
+    severity: ERROR
+    message: Loose (==) comparison against a hash/digest is vulnerable to PHP type juggling (auth bypass).
+    metadata:
+      vuln_class: auth_bypass
+      cwe: "CWE-697"
+    patterns:
+      - pattern-either:
+          - pattern: $X == md5(...)
+          - pattern: md5(...) == $X
+          - pattern: $X == sha1(...)
+          - pattern: sha1(...) == $X
+          - pattern: $X == hash(...)
+          - pattern: hash(...) == $X
+
+  # --- Access gate: flag-bearing endpoint restricted to localhost (SSRF-only) ---
+  - id: localhost-only-gate
+    languages: [php]
+    severity: INFO
+    message: Endpoint is gated to localhost (reachable only via SSRF/bot fetch).
+    metadata:
+      vuln_class: gate_localhost_only
+    patterns:
+      - pattern-either:
+          - pattern: $_SERVER["REMOTE_ADDR"] === $_SERVER["SERVER_ADDR"]
+          - pattern: $_SERVER["SERVER_ADDR"] === $_SERVER["REMOTE_ADDR"]
+
+  # --- Insecure deserialization: request input reaches unserialize() ---
+  - id: deserialization-user-input-to-unserialize
+    languages: [php]
+    severity: ERROR
+    message: User-controlled input reaches unserialize() (insecure deserialization / object injection).
+    metadata:
+      vuln_class: deserialization
+      cwe: "CWE-502"
+    mode: taint
+    pattern-sources:
+      - pattern: $_GET
+      - pattern: $_POST
+      - pattern: $_REQUEST
+      - pattern: $_COOKIE
+    pattern-sinks:
+      - pattern: unserialize(...)
+
+  # --- Flag location: flag delivered via cookie ---
+  - id: flag-in-cookie
+    languages: [php]
+    severity: INFO
+    message: Flag value set as a cookie.
+    metadata:
+      vuln_class: flag_cookie
+    patterns:
+      - pattern: setcookie("flag", ...)
+
+  # ==========================================================================
+  # Tier-2 heuristic rules (evidence_tier: heuristic) — dangerous sink shape,
+  # no proven dataflow. See web_taint_python.yaml for the rationale.
+  # ==========================================================================
+  - id: php-heuristic-sqli-dynamic-query
+    languages: [php]
+    severity: WARNING
+    message: Non-literal SQL passed to a query call (possible SQL injection).
+    metadata:
+      vuln_class: sqli
+      evidence_tier: heuristic
+      cwe: "CWE-89"
+    patterns:
+      - pattern-either:
+          - pattern: mysqli_query($C, $Q)
+          - pattern: $C->query($Q)
+          - pattern: mysql_query($Q)
+          - pattern: $PDO->exec($Q)
+      - pattern-not: mysqli_query($C, "...")
+      - pattern-not: $C->query("...")
+      - pattern-not: mysql_query("...")
+      - pattern-not: $PDO->exec("...")
+
+  - id: php-heuristic-cmdi-dynamic-command
+    languages: [php]
+    severity: WARNING
+    message: Non-literal argument passed to a shell exec (possible command injection).
+    metadata:
+      vuln_class: cmdi
+      evidence_tier: heuristic
+      cwe: "CWE-78"
+    patterns:
+      - pattern-either:
+          - pattern: system($X)
+          - pattern: exec($X)
+          - pattern: shell_exec($X)
+          - pattern: passthru($X)
+          - pattern: popen($X, ...)
+      - pattern-not: system("...")
+      - pattern-not: exec("...")
+      - pattern-not: shell_exec("...")
+      - pattern-not: passthru("...")
+      - pattern-not: popen("...", ...)
+
+  - id: php-heuristic-lfi-dynamic-include
+    languages: [php]
+    severity: WARNING
+    message: Non-literal path passed to include/require/file read (possible LFI / path traversal).
+    metadata:
+      vuln_class: path_traversal
+      evidence_tier: heuristic
+      cwe: "CWE-22"
+    patterns:
+      - pattern-either:
+          - pattern: include $X;
+          - pattern: include_once $X;
+          - pattern: require $X;
+          - pattern: require_once $X;
+          - pattern: readfile($X)
+          - pattern: file_get_contents($X)
+      - pattern-not: include "...";
+      - pattern-not: include_once "...";
+      - pattern-not: require "...";
+      - pattern-not: require_once "...";
+      - pattern-not: readfile("...")
+      - pattern-not: file_get_contents("...")
+
+  - id: php-heuristic-deserialization-unserialize
+    languages: [php]
+    severity: WARNING
+    message: unserialize() on a non-literal value (possible object injection).
+    metadata:
+      vuln_class: deserialization
+      evidence_tier: heuristic
+      cwe: "CWE-502"
+    patterns:
+      - pattern: unserialize($X)
+      - pattern-not: unserialize("...")

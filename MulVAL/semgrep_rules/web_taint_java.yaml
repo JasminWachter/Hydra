@@ -1,0 +1,171 @@
+rules:
+  # --- Command injection: request parameter reaches a process exec ---
+  - id: java-cmdi-user-input-to-shell
+    languages: [java]
+    severity: ERROR
+    message: User-controlled input reaches an OS command (command injection).
+    metadata:
+      vuln_class: cmdi
+      cwe: "CWE-78"
+    mode: taint
+    pattern-sources:
+      - pattern: $REQ.getParameter(...)
+      - pattern: $REQ.getHeader(...)
+      - pattern: $REQ.getQueryString(...)
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(Runtime\.getRuntime\(\)\.exec|.*\.exec)$
+      - pattern: new ProcessBuilder(...)
+
+  # --- SSRF: request parameter reaches a server-side HTTP client ---
+  - id: java-ssrf-user-input-to-fetcher
+    languages: [java]
+    severity: ERROR
+    message: User-controlled input reaches a server-side fetch (SSRF).
+    metadata:
+      vuln_class: ssrf
+      cwe: "CWE-918"
+    mode: taint
+    pattern-sources:
+      - pattern: $REQ.getParameter(...)
+      - pattern: $REQ.getHeader(...)
+    pattern-sinks:
+      - pattern: new URL(...).openConnection()
+      - pattern: $CLIENT.execute(...)
+      - pattern: $CLIENT.send(...)
+
+  # --- LFI / path traversal: request parameter reaches a file read ---
+  - id: java-lfi-user-input-to-file
+    languages: [java]
+    severity: ERROR
+    message: User-controlled input reaches a file read (LFI / path traversal).
+    metadata:
+      vuln_class: path_traversal
+      cwe: "CWE-22"
+    mode: taint
+    pattern-sources:
+      - pattern: $REQ.getParameter(...)
+      - pattern: $REQ.getHeader(...)
+    pattern-sinks:
+      - pattern: new File(...)
+      - pattern: new FileInputStream(...)
+      - pattern: new FileReader(...)
+      - pattern: Files.readAllBytes(...)
+
+  # --- SQL injection: request parameter reaches a statement ---
+  - id: java-sqli-user-input-to-statement
+    languages: [java]
+    severity: ERROR
+    message: User-controlled input reaches a database statement (SQL injection).
+    metadata:
+      vuln_class: sqli
+      cwe: "CWE-89"
+    mode: taint
+    pattern-sources:
+      - pattern: $REQ.getParameter(...)
+      - pattern: $REQ.getHeader(...)
+    pattern-sinks:
+      - patterns:
+          - pattern: $STMT.$M(...)
+          - metavariable-regex:
+              metavariable: $M
+              regex: ^(execute|executeQuery|executeUpdate)$
+
+  # --- XSS: request parameter reaches the HTTP response body without escaping ---
+  - id: java-xss-user-input-to-response
+    languages: [java]
+    severity: ERROR
+    message: User-controlled input reaches the response body without escaping (XSS).
+    metadata:
+      vuln_class: xss
+      cwe: "CWE-79"
+    mode: taint
+    pattern-sources:
+      - pattern: $REQ.getParameter(...)
+      - pattern: $REQ.getHeader(...)
+      - pattern: $REQ.getQueryString(...)
+    pattern-sinks:
+      - pattern: $RESP.getWriter().print(...)
+      - pattern: $RESP.getWriter().println(...)
+      - pattern: $RESP.getWriter().write(...)
+      - pattern: $RESP.getOutputStream().print(...)
+      - pattern: $RESP.getOutputStream().println(...)
+
+  # --- XXE: request parameter reaches an XML parser ---
+  - id: java-xxe-user-input-to-xml-parser
+    languages: [java]
+    severity: ERROR
+    message: User-controlled input reaches an XML parser (XXE).
+    metadata:
+      vuln_class: xxe
+      cwe: "CWE-611"
+    mode: taint
+    pattern-sources:
+      - pattern: $REQ.getParameter(...)
+      - pattern: $REQ.getHeader(...)
+      - pattern: $REQ.getInputStream(...)
+    pattern-sinks:
+      - pattern: $BUILDER.parse(...)
+      - pattern: $READER.parse(...)
+      - pattern: $UNMARSHALLER.unmarshal(...)
+
+  # --- SSTI: request parameter reaches a Spring Expression Language (SpEL) evaluation ---
+  - id: java-ssti-user-input-to-spel
+    languages: [java]
+    severity: ERROR
+    message: User-controlled input reaches a Spring Expression Language evaluation (SSTI).
+    metadata:
+      vuln_class: ssti
+      cwe: "CWE-1336"
+    mode: taint
+    pattern-sources:
+      - pattern: $REQ.getParameter(...)
+      - pattern: $REQ.getHeader(...)
+    pattern-sinks:
+      - pattern: $PARSER.parseExpression(...)
+      - pattern: new SpelExpressionParser().parseExpression(...)
+
+  # ==========================================================================
+  # Tier-2 heuristic rules (evidence_tier: heuristic) — dangerous sink shape,
+  # no proven dataflow. See web_taint_python.yaml for the rationale.
+  # ==========================================================================
+  - id: java-heuristic-sqli-concat-statement
+    languages: [java]
+    severity: WARNING
+    message: Concatenated SQL passed to a JDBC statement (possible SQL injection).
+    metadata:
+      vuln_class: sqli
+      evidence_tier: heuristic
+      cwe: "CWE-89"
+    patterns:
+      - pattern-either:
+          - pattern: $STMT.executeQuery("..." + $X)
+          - pattern: $STMT.execute("..." + $X)
+          - pattern: $STMT.executeUpdate("..." + $X)
+
+  - id: java-heuristic-cmdi-concat-exec
+    languages: [java]
+    severity: WARNING
+    message: Concatenated command passed to a process exec (possible command injection).
+    metadata:
+      vuln_class: cmdi
+      evidence_tier: heuristic
+      cwe: "CWE-78"
+    patterns:
+      - pattern-either:
+          - pattern: Runtime.getRuntime().exec("..." + $X)
+          - pattern: $RT.exec("..." + $X)
+
+  - id: java-heuristic-deserialization-readobject
+    languages: [java]
+    severity: WARNING
+    message: ObjectInputStream.readObject on external input (possible insecure deserialization).
+    metadata:
+      vuln_class: deserialization
+      evidence_tier: heuristic
+      cwe: "CWE-502"
+    patterns:
+      - pattern: new ObjectInputStream(...).readObject()

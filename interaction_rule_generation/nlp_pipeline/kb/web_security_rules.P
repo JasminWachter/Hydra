@@ -1,0 +1,889 @@
+/******************************************************/
+/****  Web Security Assessment Interaction Rules  *****/
+/****  Fine-grained vulnerability assessment for  *****/
+/****  AI agent-guided penetration testing        *****/
+/******************************************************/
+%
+% These rules sit ON TOP of the MITRE ATT&CK interaction rules.
+% They provide step-by-step assessment guidance:
+%   1. Detect attack surface (from scanner predicates)
+%   2. Identify testable vulnerability class  
+%   3. Define assessment steps
+%   4. Confirm vulnerability
+%   5. Chain to exploitation via MITRE techniques
+%
+% Predicate flow:
+%   scanner facts → attack_surface → vuln_test → vuln_confirmed → initial_access → exec_achieved
+%
+
+/******************************************************/
+/****         Primitive Predicates                *****/
+/******************************************************/
+
+% Network & Host primitives (from Nmap parser)
+primitive(attacker_at(_location)).
+primitive(host(_host)).
+primitive(connects(_src, _dst, _port)).
+primitive(exposed(_host, _port)).
+primitive(service(_host, _port, _proto, _svc, _ver)).
+primitive(os(_host, _os)).
+primitive(role(_host, _role)).
+primitive(has_data(_host, _data_type)).
+
+% Web context primitives (from parser web detection)
+primitive(web_service(_host, _port, _tech)).
+primitive(has_login_form(_host, _port)).
+primitive(has_file_upload(_host, _port)).
+primitive(has_user_input(_host, _port, _input_type)).
+primitive(has_api_endpoint(_host, _port, _method, _path)).
+primitive(has_cookie_auth(_host, _port)).
+primitive(uses_database(_host, _port, _db_type)).
+primitive(auth_service(_host, _port, _svc)).
+primitive(web_framework(_host, _port, _framework)).
+primitive(dangerous_http_methods(_host, _port)).
+primitive(no_auth_required(_host, _port)).
+primitive(auth_possible(_host, _user, _method)).
+
+% CVE primitives (from Trivy parser)
+primitive(vuln(_host, _cve_id, _package)).
+primitive(exploit_possible(_cve_id)).
+primitive(remote_service_vulnerable(_host, _port, _cve, _svc)).
+primitive(detected_vuln(_host, _port, _vclass)).
+
+% Meta predicates
+meta(attackGoal(_)).
+
+/******************************************************/
+/****         Derived Predicates                  *****/
+/******************************************************/
+
+% Attack surface detection (Layer 3 - assessment)
+derived(sqli_surface(_host, _port)).
+derived(cmdi_surface(_host, _port)).
+derived(ssrf_surface(_host, _port)).
+derived(xss_surface(_host, _port)).
+derived(path_traversal_surface(_host, _port)).
+derived(auth_bypass_surface(_host, _port)).
+derived(idor_surface(_host, _port)).
+derived(upload_vuln_surface(_host, _port)).
+derived(deserialization_surface(_host, _port)).
+derived(nosql_injection_surface(_host, _port)).
+derived(xxe_surface(_host, _port)).
+derived(ssti_surface(_host, _port)).
+derived(cors_misconfiguration_surface(_host, _port)).
+
+% Vulnerability confirmation (after testing)
+derived(sqli_confirmed(_host, _port)).
+derived(cmdi_confirmed(_host, _port)).
+derived(ssrf_confirmed(_host, _port)).
+derived(xss_confirmed(_host, _port)).
+derived(path_traversal_confirmed(_host, _port)).
+derived(auth_bypass_confirmed(_host, _port)).
+derived(idor_confirmed(_host, _port)).
+derived(upload_vuln_confirmed(_host, _port)).
+derived(deserialization_confirmed(_host, _port)).
+derived(nosql_injection_confirmed(_host, _port)).
+derived(xxe_confirmed(_host, _port)).
+derived(ssti_confirmed(_host, _port)).
+
+% Kill-chain stage predicates (Layer 2 - bridge)
+derived(recon_complete(_host, _info_type)).
+derived(initial_access(_host, _method, _priv)).
+derived(exec_achieved(_host, _priv)).
+derived(priv_escalated(_host, _from_priv, _to_priv)).
+derived(cred_obtained(_host, _cred_type, _target)).
+derived(lateral_access(_host, _priv)).
+derived(data_exfiltrated(_host, _data_type, _method)).
+derived(compromise(_host, _priv)).
+
+/******************************************************/
+/****         Tabling Directives                  *****/
+/******************************************************/
+:- table sqli_surface/2.
+:- table cmdi_surface/2.
+:- table ssrf_surface/2.
+:- table xss_surface/2.
+:- table path_traversal_surface/2.
+:- table auth_bypass_surface/2.
+:- table idor_surface/2.
+:- table upload_vuln_surface/2.
+:- table deserialization_surface/2.
+:- table nosql_injection_surface/2.
+:- table xxe_surface/2.
+:- table ssti_surface/2.
+:- table cors_misconfiguration_surface/2.
+
+:- table sqli_confirmed/2.
+:- table cmdi_confirmed/2.
+:- table ssrf_confirmed/2.
+:- table xss_confirmed/2.
+:- table path_traversal_confirmed/2.
+:- table auth_bypass_confirmed/2.
+:- table idor_confirmed/2.
+:- table upload_vuln_confirmed/2.
+:- table deserialization_confirmed/2.
+:- table nosql_injection_confirmed/2.
+:- table xxe_confirmed/2.
+:- table ssti_confirmed/2.
+
+:- table recon_complete/2.
+:- table initial_access/3.
+:- table exec_achieved/2.
+:- table priv_escalated/3.
+:- table cred_obtained/3.
+:- table lateral_access/2.
+:- table data_exfiltrated/3.
+:- table compromise/2.
+
+
+/******************************************************/
+/****  STAGE 1: RECONNAISSANCE                   *****/
+/****  Scanner data → recon_complete              *****/
+/******************************************************/
+
+% 1.1 Service enumeration reveals attack surface
+interaction_rule(
+  (recon_complete(Host, service_enum) :-
+    attacker_at(Net),
+    connects(Net, Host, Port),
+    service(Host, Port, _Proto, _Svc, _Ver)),
+  rule_desc('Nmap service scan reveals exposed services (T1046 Network Service Scanning)', 0.95)).
+
+% 1.2 Web technology fingerprinting
+interaction_rule(
+  (recon_complete(Host, web_fingerprint) :-
+    web_service(Host, Port, _Tech),
+    connects(_Net, Host, Port)),
+  rule_desc('Web technology identified on exposed port (T1592 Gather Victim Host Information)', 0.9)).
+
+% 1.3 Known CVE discovery via vulnerability scanning
+interaction_rule(
+  (recon_complete(Host, vuln_scan) :-
+    vuln(Host, _CVE, _Pkg)),
+  rule_desc('Vulnerability scanner found known CVEs (T1595 Active Scanning)', 0.95)).
+
+% 1.4 Database service discovery
+interaction_rule(
+  (recon_complete(Host, database_found) :-
+    uses_database(Host, Port, _DbType),
+    connects(_Net, Host, Port)),
+  rule_desc('Database service discovered on network (T1046)', 0.9)).
+
+% 1.5 Authentication endpoint discovery
+interaction_rule(
+  (recon_complete(Host, auth_endpoint) :-
+    has_login_form(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('Login form discovered - authentication testing target (T1595)', 0.85)).
+
+
+/******************************************************/
+/****  STAGE 2: ATTACK SURFACE DETECTION          *****/
+/****  Context-aware vulnerability class mapping  *****/
+/******************************************************/
+
+% =====================================================
+% 2.1 SQL Injection Surface
+% Condition: web service + database backend + user input
+% Context: login forms, search, API with DB → test SQLi
+% NOT applicable to: static pages, file-only endpoints
+% =====================================================
+interaction_rule(
+  (sqli_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, _Tech),
+    uses_database(Host, _DbPort, _DbType),
+    has_user_input(Host, Port, _InputType)),
+  rule_desc('SQL injection surface: web app with database backend accepts user input', 0.85)).
+
+% SQLi specifically via login forms (higher confidence)
+interaction_rule(
+  (sqli_surface(Host, Port) :-
+    recon_complete(Host, auth_endpoint),
+    has_login_form(Host, Port),
+    uses_database(Host, _DbPort, _DbType)),
+  rule_desc('SQL injection surface: login form with database backend (auth bypass via SQLi)', 0.9)).
+
+% =====================================================
+% 2.2 NoSQL Injection Surface
+% Condition: web service + MongoDB/CouchDB/Redis + user input
+% More likely with JSON APIs
+% =====================================================
+interaction_rule(
+  (nosql_injection_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, _Tech),
+    uses_database(Host, _DbPort, DbType),
+    (DbType = 'mongodb' ; DbType = 'couchdb' ; DbType = 'redis'),
+    has_api_endpoint(Host, Port, _Method, _Path)),
+  rule_desc('NoSQL injection surface: API endpoint with NoSQL backend (test JSON injection)', 0.8)).
+
+% =====================================================
+% 2.3 Command Injection Surface
+% Condition: web service + user input that could reach OS commands
+% Typical: ping/traceroute utilities, file processing, API with shell interaction
+% =====================================================
+interaction_rule(
+  (cmdi_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, _Tech),
+    has_api_endpoint(Host, Port, 'POST', _Path),
+    has_user_input(Host, Port, _InputType)),
+  rule_desc('Command injection surface: POST API accepting user input may pass to shell', 0.7)).
+
+% =====================================================
+% 2.4 Server-Side Request Forgery (SSRF) Surface
+% Condition: web service + API endpoints (especially with URL params)
+% NOT applicable to: login-only pages  
+% =====================================================
+interaction_rule(
+  (ssrf_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, _Tech),
+    has_api_endpoint(Host, Port, _Method, _Path),
+    uses_database(Host, _DbPort, _DbType)),
+  rule_desc('SSRF surface: web API may fetch internal resources (test URL parameter injection)', 0.6)).
+
+% =====================================================
+% 2.5 Cross-Site Scripting (XSS) Surface
+% Condition: web service + user input that gets reflected
+% =====================================================
+interaction_rule(
+  (xss_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, _Tech),
+    has_user_input(Host, Port, _InputType)),
+  rule_desc('XSS surface: web app reflects user input (test reflected/stored XSS)', 0.65)).
+
+% =====================================================
+% 2.6 Path Traversal / Local File Inclusion Surface
+% Condition: web service + file upload OR file serving endpoints
+% =====================================================
+interaction_rule(
+  (path_traversal_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, _Tech),
+    has_file_upload(Host, Port)),
+  rule_desc('Path traversal surface: file upload endpoint may allow directory escape', 0.75)).
+
+% =====================================================
+% 2.7 Authentication Bypass Surface
+% Condition: login form + cookie auth (weak session management)
+% =====================================================
+interaction_rule(
+  (auth_bypass_surface(Host, Port) :-
+    recon_complete(Host, auth_endpoint),
+    has_login_form(Host, Port),
+    has_cookie_auth(Host, Port)),
+  rule_desc('Auth bypass surface: cookie-based auth may be spoofable or predictable', 0.7)).
+
+% Auth bypass via default/no credentials
+interaction_rule(
+  (auth_bypass_surface(Host, Port) :-
+    no_auth_required(Host, Port),
+    service(Host, Port, _Proto, _Svc, _Ver)),
+  rule_desc('Auth bypass surface: service requires no authentication', 0.95)).
+
+% =====================================================
+% 2.8 Insecure Direct Object Reference (IDOR) Surface
+% Condition: API endpoints with resource IDs + cookie auth
+% =====================================================
+interaction_rule(
+  (idor_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    has_api_endpoint(Host, Port, _Method, _Path),
+    has_cookie_auth(Host, Port)),
+  rule_desc('IDOR surface: API with cookie auth may allow accessing other users resources', 0.6)).
+
+% =====================================================
+% 2.9 File Upload Vulnerability Surface
+% Condition: file upload + web service (unrestricted upload → RCE)
+% =====================================================
+interaction_rule(
+  (upload_vuln_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, _Tech),
+    has_file_upload(Host, Port)),
+  rule_desc('Upload vulnerability surface: file upload may allow malicious file execution', 0.7)).
+
+% =====================================================
+% 2.10 Insecure Deserialization Surface
+% Condition: API endpoints accepting complex data (JSON/YAML/XML)
+% More likely with Node.js, Python, Java backends
+% =====================================================
+interaction_rule(
+  (deserialization_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, Tech),
+    has_api_endpoint(Host, Port, 'POST', _Path),
+    (Tech = 'node_js_express_framework' ; Tech = 'flask' ; Tech = 'django' ; Tech = 'tomcat')),
+  rule_desc('Deserialization surface: POST API on framework prone to unsafe deserialization', 0.6)).
+
+% =====================================================
+% 2.11 XML External Entity (XXE) Surface
+% Condition: API accepting XML input
+% =====================================================
+interaction_rule(
+  (xxe_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, _Tech),
+    has_api_endpoint(Host, Port, 'POST', _Path)),
+  rule_desc('XXE surface: POST endpoint may accept XML with external entity injection', 0.45)).
+
+% =====================================================
+% 2.12 Server-Side Template Injection (SSTI) Surface
+% Condition: web framework with template engine + user input reflected
+% =====================================================
+interaction_rule(
+  (ssti_surface(Host, Port) :-
+    recon_complete(Host, web_fingerprint),
+    web_service(Host, Port, Tech),
+    has_user_input(Host, Port, _InputType),
+    (Tech = 'flask' ; Tech = 'django' ; Tech = 'node_js_express_framework')),
+  rule_desc('SSTI surface: template engine may render user input unsafely', 0.5)).
+
+
+/******************************************************/
+/****  STAGE 3: VULNERABILITY CONFIRMATION        *****/
+/****  Attack surface + testing → confirmed vuln  *****/
+/******************************************************/
+
+% 3.0 Evidence-backed vulnerability confirmation
+interaction_rule(
+  (sqli_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, sqli)),
+  rule_desc('Evidence-backed SQLi confirmation from static analysis', 0.95)).
+
+interaction_rule(
+  (nosql_injection_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, nosql_injection)),
+  rule_desc('Evidence-backed NoSQL injection confirmation from static analysis', 0.95)).
+
+interaction_rule(
+  (cmdi_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, cmdi)),
+  rule_desc('Evidence-backed command injection confirmation from static analysis', 0.95)).
+
+interaction_rule(
+  (ssrf_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, ssrf)),
+  rule_desc('Evidence-backed SSRF confirmation from static analysis', 0.9)).
+
+interaction_rule(
+  (xss_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, xss)),
+  rule_desc('Evidence-backed XSS confirmation from static analysis', 0.9)).
+
+interaction_rule(
+  (path_traversal_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, path_traversal)),
+  rule_desc('Evidence-backed path traversal confirmation from static analysis', 0.9)).
+
+interaction_rule(
+  (auth_bypass_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, auth_bypass)),
+  rule_desc('Evidence-backed auth bypass confirmation from static analysis', 0.9)).
+
+interaction_rule(
+  (idor_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, idor)),
+  rule_desc('Evidence-backed IDOR confirmation from static analysis', 0.9)).
+
+interaction_rule(
+  (upload_vuln_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, upload_vuln)),
+  rule_desc('Evidence-backed upload vulnerability confirmation from static analysis', 0.9)).
+
+interaction_rule(
+  (deserialization_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, deserialization)),
+  rule_desc('Evidence-backed deserialization confirmation from static analysis', 0.9)).
+
+interaction_rule(
+  (xxe_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, xxe)),
+  rule_desc('Evidence-backed XXE confirmation from static analysis', 0.9)).
+
+interaction_rule(
+  (ssti_confirmed(Host, Port) :-
+    detected_vuln(Host, Port, ssti)),
+  rule_desc('Evidence-backed SSTI confirmation from static analysis', 0.9)).
+
+% 3.1 SQL Injection Confirmed
+% The surface exists AND we can test it → assume agent tests and confirms
+interaction_rule(
+  (sqli_confirmed(Host, Port) :-
+    sqli_surface(Host, Port),
+    has_user_input(Host, Port, _InputType)),
+  rule_desc('SQLi assessment: test with payloads (OR 1=1, UNION SELECT, time-based blind)', 0.7)).
+
+% 3.2 NoSQL Injection Confirmed
+interaction_rule(
+  (nosql_injection_confirmed(Host, Port) :-
+    nosql_injection_surface(Host, Port),
+    has_api_endpoint(Host, Port, _Method, _Path)),
+  rule_desc('NoSQLi assessment: test JSON injection ({$gt:""}, {$ne:null}, $where)', 0.65)).
+
+% 3.3 Command Injection Confirmed
+interaction_rule(
+  (cmdi_confirmed(Host, Port) :-
+    cmdi_surface(Host, Port),
+    has_api_endpoint(Host, Port, 'POST', _Path)),
+  rule_desc('CMDi assessment: test with ; id, | whoami, $(command), backtick injection', 0.6)).
+
+% 3.4 SSRF Confirmed
+interaction_rule(
+  (ssrf_confirmed(Host, Port) :-
+    ssrf_surface(Host, Port)),
+  rule_desc('SSRF assessment: test with http://127.0.0.1, http://metadata, file:// URLs', 0.5)).
+
+% 3.5 XSS Confirmed
+interaction_rule(
+  (xss_confirmed(Host, Port) :-
+    xss_surface(Host, Port)),
+  rule_desc('XSS assessment: test reflected <script>alert(1)</script>, stored, DOM-based', 0.55)).
+
+% 3.6 Path Traversal Confirmed
+interaction_rule(
+  (path_traversal_confirmed(Host, Port) :-
+    path_traversal_surface(Host, Port)),
+  rule_desc('Path traversal assessment: test ../../../etc/passwd, ....// bypass, null byte', 0.6)).
+
+% 3.7 Auth Bypass Confirmed
+interaction_rule(
+  (auth_bypass_confirmed(Host, Port) :-
+    auth_bypass_surface(Host, Port)),
+  rule_desc('Auth bypass assessment: test cookie manipulation, JWT forgery, default creds', 0.6)).
+
+% 3.8 IDOR Confirmed
+interaction_rule(
+  (idor_confirmed(Host, Port) :-
+    idor_surface(Host, Port)),
+  rule_desc('IDOR assessment: enumerate IDs, test horizontal/vertical privilege escalation', 0.5)).
+
+% 3.9 Upload Vulnerability Confirmed
+interaction_rule(
+  (upload_vuln_confirmed(Host, Port) :-
+    upload_vuln_surface(Host, Port)),
+  rule_desc('Upload assessment: test webshell upload, extension bypass, MIME type abuse', 0.6)).
+
+% 3.10 Deserialization Confirmed
+interaction_rule(
+  (deserialization_confirmed(Host, Port) :-
+    deserialization_surface(Host, Port)),
+  rule_desc('Deserialization assessment: test YAML/JSON gadget chains, pickle, Java serialization', 0.5)).
+
+% 3.11 XXE Confirmed
+interaction_rule(
+  (xxe_confirmed(Host, Port) :-
+    xxe_surface(Host, Port)),
+  rule_desc('XXE assessment: test <!DOCTYPE> with external entities, parameter entities', 0.4)).
+
+% 3.12 SSTI Confirmed
+interaction_rule(
+  (ssti_confirmed(Host, Port) :-
+    ssti_surface(Host, Port)),
+  rule_desc('SSTI assessment: test {{7*7}}, ${7*7}, <% %>, #{} template expressions', 0.45)).
+
+
+/******************************************************/
+/****  STAGE 4: INITIAL ACCESS                    *****/
+/****  Confirmed vuln → initial_access            *****/
+/****  Maps to MITRE T1190 Exploit Public-Facing  *****/
+/******************************************************/
+
+% 4.1 SQLi → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, sqli, web_user) :-
+    detected_vuln(Host, Port, sqli),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed SQLi exploitation path from static findings - T1190', 0.9)).
+
+% 4.1b SQLi → Initial Access (heuristic fallback)
+interaction_rule(
+  (initial_access(Host, sqli_heuristic, web_user) :-
+    sqli_confirmed(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('SQLi exploitation fallback via contextual confirmation - T1190', 0.78)).
+
+% 4.2 NoSQLi → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, nosqli, web_user) :-
+    detected_vuln(Host, Port, nosql_injection),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed NoSQL injection path from static findings - T1190', 0.88)).
+
+% 4.2b NoSQLi → Initial Access (heuristic fallback)
+interaction_rule(
+  (initial_access(Host, nosqli_heuristic, web_user) :-
+    nosql_injection_confirmed(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('NoSQL injection fallback via contextual confirmation - T1190', 0.72)).
+
+% 4.3 Command Injection → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, cmdi, web_user) :-
+    detected_vuln(Host, Port, cmdi),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed command injection path from static findings - T1190', 0.9)).
+
+% 4.3b Command Injection → Initial Access (heuristic fallback)
+interaction_rule(
+  (initial_access(Host, cmdi_heuristic, web_user) :-
+    cmdi_confirmed(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('Command injection fallback via contextual confirmation - T1190', 0.8)).
+
+% 4.4 Auth Bypass → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, auth_bypass, web_user) :-
+    detected_vuln(Host, Port, auth_bypass),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed auth bypass path from static findings - T1078', 0.86)).
+
+% 4.4b Auth Bypass → Initial Access (heuristic fallback)
+interaction_rule(
+  (initial_access(Host, auth_bypass_heuristic, web_user) :-
+    auth_bypass_confirmed(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('Authentication bypass fallback via contextual confirmation - T1078', 0.76)).
+
+% 4.5 File Upload → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, upload_rce, web_user) :-
+    detected_vuln(Host, Port, upload_vuln),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed upload RCE path from static findings - T1190', 0.86)).
+
+% 4.5b File Upload → Initial Access (heuristic fallback)
+interaction_rule(
+  (initial_access(Host, upload_rce_heuristic, web_user) :-
+    upload_vuln_confirmed(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('Upload RCE fallback via contextual confirmation - T1190', 0.68)).
+
+% 4.6 Deserialization → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, deserialization, web_user) :-
+    detected_vuln(Host, Port, deserialization),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed deserialization path from static findings - T1190', 0.82)).
+
+% 4.6b Deserialization → Initial Access (heuristic fallback)
+interaction_rule(
+  (initial_access(Host, deserialization_heuristic, web_user) :-
+    deserialization_confirmed(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('Deserialization fallback via contextual confirmation - T1190', 0.62)).
+
+% 4.7 SSTI → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, ssti, web_user) :-
+    detected_vuln(Host, Port, ssti),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed SSTI path from static findings - T1190', 0.82)).
+
+% 4.7b SSTI → Initial Access (heuristic fallback)
+interaction_rule(
+  (initial_access(Host, ssti_heuristic, web_user) :-
+    ssti_confirmed(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('SSTI fallback via contextual confirmation - T1190', 0.62)).
+
+% 4.8 Known CVE → Initial Access (T1190)
+interaction_rule(
+  (initial_access(Host, known_cve, user) :-
+    recon_complete(Host, vuln_scan),
+    remote_service_vulnerable(Host, Port, _CVE, _Svc),
+    connects(_Net, Host, Port)),
+  rule_desc('Known CVE on exposed service enables initial access - T1190', 0.85)).
+
+% 4.9 SSRF → Initial Access to Internal Services (T1190)
+interaction_rule(
+  (initial_access(Host, ssrf, web_user) :-
+    detected_vuln(Host, Port, ssrf),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed SSRF path from static findings - T1190', 0.78)).
+
+% 4.9b SSRF → Initial Access (heuristic fallback)
+interaction_rule(
+  (initial_access(Host, ssrf_heuristic, web_user) :-
+    ssrf_confirmed(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('SSRF fallback via contextual confirmation - T1190', 0.58)).
+
+% 4.9c IDOR → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, idor_access, web_user) :-
+    detected_vuln(Host, Port, idor),
+    has_cookie_auth(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed IDOR path from static findings (session-bound object access)', 0.76)).
+
+% 4.9d XXE → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, xxe_file_read, web_user) :-
+    detected_vuln(Host, Port, xxe),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed XXE path from static findings (file/entity expansion access)', 0.72)).
+
+% 4.9e Path Traversal → Initial Access (evidence-backed)
+interaction_rule(
+  (initial_access(Host, path_traversal_read, web_user) :-
+    detected_vuln(Host, Port, path_traversal),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed path traversal access route from static findings', 0.82)).
+
+% 4.10 Default/No Auth → Initial Access (T1078)
+interaction_rule(
+  (initial_access(Host, default_creds, user) :-
+    no_auth_required(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('No authentication required - T1078 Valid Accounts (default)', 0.95)).
+
+% 4.11 XSS → Session Access (T1185 Browser Session Hijacking)
+interaction_rule(
+  (initial_access(Host, xss_session, web_user) :-
+    detected_vuln(Host, Port, xss),
+    has_cookie_auth(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed XSS session hijacking from static findings - T1185', 0.82)).
+
+% 4.11b XSS → Reflected Access (evidence-backed without cookie requirement)
+interaction_rule(
+  (initial_access(Host, xss_reflected_evidence, web_user) :-
+    detected_vuln(Host, Port, xss),
+    has_user_input(Host, Port, _InputType),
+    connects(_Net, Host, Port)),
+  rule_desc('Evidence-backed reflected XSS path from static findings', 0.76)).
+
+% 4.12 XSS reflective route (heuristic fallback without scanner evidence)
+interaction_rule(
+  (initial_access(Host, xss_reflection, web_user) :-
+    xss_confirmed(Host, Port),
+    has_cookie_auth(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('XSS reflection route enables authenticated web access - heuristic fallback', 0.62)).
+
+
+/******************************************************/
+/****  STAGE 5: EXECUTION                         *****/
+/****  Initial access → code execution            *****/
+/****  Maps to MITRE T1059 Command Interpreter    *****/
+/******************************************************/
+
+% 5.1 Command Injection → Direct Execution (T1059)
+interaction_rule(
+  (exec_achieved(Host, web_user) :-
+    (initial_access(Host, cmdi, _Priv) ; initial_access(Host, cmdi_heuristic, _Priv))),
+  rule_desc('Command injection provides direct OS command execution - T1059', 0.9)).
+
+% 5.2 SQL Injection → Execution via DB functions (T1059)
+interaction_rule(
+  (exec_achieved(Host, web_user) :-
+    (initial_access(Host, sqli, _Priv) ; initial_access(Host, sqli_heuristic, _Priv)),
+    uses_database(Host, _Port, DbType),
+    (DbType = 'postgresql' ; DbType = 'mysql' ; DbType = 'mssql')),
+  rule_desc('SQLi to OS command via database functions (xp_cmdshell, COPY TO, sys_exec) - T1059', 0.6)).
+
+% 5.3 File Upload → Execution via Webshell (T1059)
+interaction_rule(
+  (exec_achieved(Host, web_user) :-
+    (initial_access(Host, upload_rce, _Priv) ; initial_access(Host, upload_rce_heuristic, _Priv))),
+  rule_desc('Uploaded webshell provides command execution - T1059', 0.8)).
+
+% 5.4 SSTI → Execution via Template Engine (T1059)
+interaction_rule(
+  (exec_achieved(Host, web_user) :-
+    (initial_access(Host, ssti, _Priv) ; initial_access(Host, ssti_heuristic, _Priv))),
+  rule_desc('Template injection escalates to OS command execution - T1059', 0.75)).
+
+% 5.5 Deserialization → Execution (T1059)
+interaction_rule(
+  (exec_achieved(Host, web_user) :-
+    (initial_access(Host, deserialization, _Priv) ; initial_access(Host, deserialization_heuristic, _Priv))),
+  rule_desc('Deserialization gadget chain achieves code execution - T1059', 0.7)).
+
+% 5.6 Known CVE → Execution (T1203)
+interaction_rule(
+  (exec_achieved(Host, user) :-
+    initial_access(Host, known_cve, _Priv),
+    exploit_possible(_CVE)),
+  rule_desc('Known CVE exploit achieves code execution - T1203 Exploitation for Client Exec', 0.8)).
+
+% 5.7 Any initial access + service → potential execution
+interaction_rule(
+  (exec_achieved(Host, web_user) :-
+    initial_access(Host, _Method, _Priv),
+    web_service(Host, _Port, _Tech)),
+  rule_desc('Initial access on web service enables further exploitation toward execution', 0.5)).
+
+
+/******************************************************/
+/****  STAGE 6: PRIVILEGE ESCALATION              *****/
+/****  Exec as low-priv → higher privilege        *****/
+/****  Maps to MITRE T1068 Exploitation for PE    *****/
+/******************************************************/
+
+% 6.1 Local CVE enables privilege escalation (T1068)
+interaction_rule(
+  (priv_escalated(Host, web_user, root) :-
+    exec_achieved(Host, web_user),
+    vuln(Host, _CVE, _Pkg),
+    exploit_possible(_CVE)),
+  rule_desc('Local CVE exploit escalates web_user to root - T1068', 0.7)).
+
+% 6.2 SUID/misconfiguration based privesc (T1548)
+interaction_rule(
+  (priv_escalated(Host, web_user, root) :-
+    exec_achieved(Host, web_user),
+    os(Host, 'linux')),
+  rule_desc('Linux privesc: check SUID binaries, sudo misconfig, kernel exploits - T1548', 0.5)).
+
+% 6.3 Database to OS escalation  
+interaction_rule(
+  (priv_escalated(Host, web_user, db_admin) :-
+    exec_achieved(Host, web_user),
+    uses_database(Host, _Port, _DbType)),
+  rule_desc('Escalate from web user to database admin via SQL execution - T1068', 0.6)).
+
+
+/******************************************************/
+/****  STAGE 7: CREDENTIAL ACCESS                 *****/
+/****  Execution → credential harvesting          *****/
+/****  Maps to MITRE T1003 OS Credential Dumping  *****/
+/******************************************************/
+
+% 7.1 SQLi → Database credential extraction (T1003)
+interaction_rule(
+  (cred_obtained(Host, db_credentials, Host) :-
+    (initial_access(Host, sqli, _Priv) ; initial_access(Host, sqli_heuristic, _Priv)),
+    uses_database(Host, _Port, _DbType)),
+  rule_desc('SQLi extracts database credentials - T1003 OS Credential Dumping', 0.8)).
+
+% 7.2 NoSQLi → Credential extraction (T1003)
+interaction_rule(
+  (cred_obtained(Host, db_credentials, Host) :-
+    (initial_access(Host, nosqli, _Priv) ; initial_access(Host, nosqli_heuristic, _Priv)),
+    uses_database(Host, _Port, _DbType)),
+  rule_desc('NoSQL injection extracts stored credentials - T1003', 0.75)).
+
+% 7.3 Path traversal → File-based credential access (T1003)
+interaction_rule(
+  (cred_obtained(Host, file_credentials, Host) :-
+    path_traversal_confirmed(Host, Port),
+    connects(_Net, Host, Port)),
+  rule_desc('Path traversal reads credential files (/etc/shadow, .env, config) - T1003', 0.65)).
+
+% 7.3b XSS session hijack → credential material (T1185/T1550)
+interaction_rule(
+  (cred_obtained(Host, session_token, Host) :-
+    initial_access(Host, xss_session, _Priv),
+    has_cookie_auth(Host, _Port)),
+  rule_desc('XSS steals session cookies/tokens that grant authenticated access - T1185/T1550', 0.74)).
+
+% 7.4 Execution → Credential dumping (T1003)
+interaction_rule(
+  (cred_obtained(Host, system_credentials, Host) :-
+    exec_achieved(Host, _Priv)),
+  rule_desc('OS execution enables credential dumping (hashdump, mimikatz, /etc/shadow) - T1003', 0.7)).
+
+% 7.5 SSRF → Internal credential access (T1552)
+interaction_rule(
+  (cred_obtained(Host, cloud_metadata, Host) :-
+    ssrf_confirmed(Host, _Port)),
+  rule_desc('SSRF accesses cloud metadata endpoint for credentials - T1552', 0.6)).
+
+
+/******************************************************/
+/****  STAGE 8: DATA ACCESS & EXFILTRATION        *****/
+/****  Credential/exec → data theft               *****/
+/****  Maps to MITRE T1005 Data from Local System *****/
+/******************************************************/
+
+% 8.1 SQLi → Data exfiltration (T1005/T1530)
+interaction_rule(
+  (data_exfiltrated(Host, database_dump, sqli) :-
+    sqli_confirmed(Host, _Port),
+    uses_database(Host, _DbPort, _DbType),
+    has_data(Host, _DataType)),
+  rule_desc('SQLi dumps database contents - T1005 Data from Local System', 0.8)).
+
+% 8.2 NoSQLi → Data exfiltration
+interaction_rule(
+  (data_exfiltrated(Host, database_dump, nosqli) :-
+    nosql_injection_confirmed(Host, _Port),
+    has_data(Host, _DataType)),
+  rule_desc('NoSQL injection dumps database contents - T1005', 0.75)).
+
+% 8.3 Path traversal → File exfiltration (T1005)
+interaction_rule(
+  (data_exfiltrated(Host, sensitive_files, path_traversal) :-
+    path_traversal_confirmed(Host, _Port),
+    has_data(Host, _DataType)),
+  rule_desc('Path traversal reads sensitive files - T1005', 0.7)).
+
+% 8.4 Execution → Data collection (T1005)
+interaction_rule(
+  (data_exfiltrated(Host, system_data, exec) :-
+    exec_achieved(Host, _Priv),
+    has_data(Host, _DataType)),
+  rule_desc('Command execution collects and exfiltrates data - T1005', 0.75)).
+
+
+/******************************************************/
+/****  STAGE 9: LATERAL MOVEMENT                  *****/
+/****  Creds on Host A → access Host B            *****/
+/****  Maps to MITRE T1021 Remote Services        *****/
+/******************************************************/
+
+% 9.1 Credentials enable lateral movement (T1021)
+interaction_rule(
+  (lateral_access(TargetHost, user) :-
+    cred_obtained(_SourceHost, _CredType, TargetHost),
+    service(TargetHost, _Port, _Proto, _Svc, _Ver),
+    connects(_Net, TargetHost, _Port)),
+  rule_desc('Harvested credentials enable lateral movement - T1021 Remote Services', 0.7)).
+
+% 9.2 Same-host credential reuse (T1078)
+interaction_rule(
+  (lateral_access(Host, admin) :-
+    cred_obtained(Host, _CredType, Host),
+    auth_service(Host, _Port, _Svc)),
+  rule_desc('Credential reuse on same host escalates access - T1078 Valid Accounts', 0.7)).
+
+
+/******************************************************/
+/****  STAGE 10: COMPROMISE (FINAL)               *****/
+/****  All paths converge to compromise           *****/
+/******************************************************/
+
+% 10.1 Privilege escalation → full compromise
+interaction_rule(
+  (compromise(Host, root) :-
+    priv_escalated(Host, _FromPriv, root)),
+  rule_desc('Privilege escalation achieves full system compromise', 0.95)).
+
+% 10.2 Execution as web_user → partial compromise
+interaction_rule(
+  (compromise(Host, web_user) :-
+    exec_achieved(Host, web_user)),
+  rule_desc('Web-level code execution achieves partial compromise', 0.8)).
+
+% 10.3 Lateral access → compromise on target
+interaction_rule(
+  (compromise(Host, user) :-
+    lateral_access(Host, _Priv)),
+  rule_desc('Lateral movement achieves compromise on target host', 0.85)).
+
+% 10.4 Data exfiltration → compromise (impact achieved)
+interaction_rule(
+  (compromise(Host, data_breach) :-
+    data_exfiltrated(Host, _DataType, _Method)),
+  rule_desc('Data exfiltration constitutes compromise (impact) - T1567', 0.9)).
+
+% 10.5 Credential obtained → partial compromise
+interaction_rule(
+  (compromise(Host, user) :-
+    cred_obtained(Host, _CredType, _Target)),
+  rule_desc('Credential access constitutes partial compromise - T1003', 0.7)).

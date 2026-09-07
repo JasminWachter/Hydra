@@ -1,0 +1,55 @@
+task_path,source,year,challenge_slug,title,required_vulns
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2020/3. Web Exploitation/1. DNS,hkcert-ctf,2020,1-dns,DNS,info_disclosure
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2020/3. Web Exploitation/2. Rickroll,hkcert-ctf,2020,2-rickroll,Rickroll,info_disclosure
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2020/3. Web Exploitation/3. Sanity Check II,hkcert-ctf,2020,3-sanity-check-ii,Sanity Check II,info_disclosure
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2020/3. Web Exploitation/4. C99Mask,hkcert-ctf,2020,4-c99mask,C99Mask,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2020/3. Web Exploitation/5. Conversion Center,hkcert-ctf,2020,5-conversion-center,Conversion Center,ssrf
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2020/3. Web Exploitation/6. LockPickDuck v3,hkcert-ctf,2020,6-lockpickduck-v3,LockPickDuck v3,auth_bypass
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/00-xss-bot,hkcert-ctf,2021,00-xss-bot,babyUXSS,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/10-return-of-tuning-keyboard,hkcert-ctf,2021,10-return-of-tuning-keyboard,Ophiuchus,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/12-babyurii,hkcert-ctf,2021,12-babyurii,babyURIi,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/12b-return-of-babyURIi,hkcert-ctf,2021,12b-return-of-babyURIi,Return of babyURIi,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/37-ctf-tuning-master,hkcert-ctf,2021,37-ctf-tuning-master,CTF Tuning Master (Read),cmdi
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/37b-ctf-tuning-master-2,hkcert-ctf,2021,37b-ctf-tuning-master-2,CTF Tuning Master (Execute),cmdi
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/40-babyxss,hkcert-ctf,2021,40-babyxss,babyXSS,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/55-positron,hkcert-ctf,2021,55-positron,Positron,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/56-because-i-said-it,hkcert-ctf,2021,56-because-i-said-it,Because I Said It,auth_bypass
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/62-squirrelcommunity,hkcert-ctf,2021,62-squirrelcommunity,Squirrel Community 1,info_disclosure
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/62b-squirrelcommunity-2,hkcert-ctf,2021,62b-squirrelcommunity-2,Squirrel Community 2,cmdi
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/64-sea-of-thorns,hkcert-ctf,2021,64-sea-of-thorns,The Wilderness,info_disclosure
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/70-jqplayground,hkcert-ctf,2021,70-jqplayground,JQ Playground,cmdi
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/98-infantbrowser,hkcert-ctf,2021,98-infantbrowser,Infant Browser,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2021/T1-infantxss,hkcert-ctf,2021,T1-infantxss,Infant XSS,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/05-motp,hkcert-ctf,2022,05-motp,MOTP,auth_bypass
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/08-secured-web-service,hkcert-ctf,2022,08-secured-web-service,Secured Web Service,path_traversal
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/10-math24-1,hkcert-ctf,2022,10-math24-1,The Math24 Game 1,auth_bypass
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/17-expat-passer-confucian,hkcert-ctf,2022,17-expat-passer-confucian,Expat Passer Confucian,xxe
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/22-back-to-the-past,hkcert-ctf,2022,22-back-to-the-past,Back to the Past,git_exposure
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/29-cve-1999,hkcert-ctf,2022,29-cve-1999,CVE 1999,cmdi
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/39-spyce,hkcert-ctf,2022,39-spyce,Spyce,path_traversal
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/40-spyce2,hkcert-ctf,2022,40-spyce2,Spyce2,ssti
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/42-prototype-sanityxss,hkcert-ctf,2022,42-prototype-sanityxss,protoTYPE:v2 - sanityXSS,prototype_pollution;xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2022/43-prototype-chaos,hkcert-ctf,2022,43-prototype-chaos,protoTYPE:v3 - Chaos,prototype_pollution
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/04-puml,hkcert-ctf,2023,04-puml,ProbablyUnknown's Markup Language,ssti
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/07-secret-notebook,hkcert-ctf,2023,07-secret-notebook,Secret Notebook,sqli
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/13-stcode3,hkcert-ctf,2023,13-stcode3,ST Code (III),xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/14-infantxss-again,hkcert-ctf,2023,14-infantxss-again,Infant XSS again,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/15-wishlist,hkcert-ctf,2023,15-wishlist,Wishlist,xss;ssrf
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/26-php-net-backdoor,hkcert-ctf,2023,26-php-net-backdoor,PHP.net Backdoor (I),ssrf
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/27-php-net-backdoor2,hkcert-ctf,2023,27-php-net-backdoor2,PHP.net Backdoor (II),ssrf
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/32-babyxss-again,hkcert-ctf,2023,32-babyxss-again,Baby XSS again,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/33-fetusxss-again,hkcert-ctf,2023,33-fetusxss-again,Fetus XSS again,xss
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/37-fake-ground-offer,hkcert-ctf,2023,37-fake-ground-offer,Fake/Ground Offer,info_disclosure
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/38-myblog,hkcert-ctf,2023,38-myblog,Myblog,path_traversal
+benchmark/hkcert-ctf/CTF-Challenges/CTF-2023/40-re-zero,hkcert-ctf,2023,40-re-zero,Re:Zero,auth_bypass
+benchmark/project-sekai-ctf/sekaictf-2022/web/bottle-poem,project-sekai-ctf,2022,bottle-poem,Bottled Poem,path_traversal
+benchmark/project-sekai-ctf/sekaictf-2022/web/crab-commodities,project-sekai-ctf,2022,crab-commodities,Crab Commodities,auth_bypass
+benchmark/project-sekai-ctf/sekaictf-2022/web/issues,project-sekai-ctf,2022,issues,Issues,auth_bypass
+benchmark/project-sekai-ctf/sekaictf-2022/web/obligatory-calc,project-sekai-ctf,2022,obligatory-calc,Obligatory Calc,xss
+benchmark/project-sekai-ctf/sekaictf-2022/web/safelist,project-sekai-ctf,2022,safelist,Safelist,xss
+benchmark/project-sekai-ctf/sekaictf-2022/web/sekai-game-start,project-sekai-ctf,2022,sekai-game-start,Sekai Game Start,deserialization
+benchmark/project-sekai-ctf/sekaictf-2023/web/chunky,project-sekai-ctf,2023,chunky,Chunky,request_smuggling;cache_poisoning
+benchmark/project-sekai-ctf/sekaictf-2023/web/frog-waf,project-sekai-ctf,2023,frog-waf,Frog-WAF,ssti;cmdi
+benchmark/project-sekai-ctf/sekaictf-2023/web/golf-jail,project-sekai-ctf,2023,golf-jail,Golf Jail,cmdi
+benchmark/project-sekai-ctf/sekaictf-2023/web/leakless-note,project-sekai-ctf,2023,leakless-note,Leakless Note,xss
+benchmark/project-sekai-ctf/sekaictf-2023/web/scanner-service,project-sekai-ctf,2023,scanner-service,Scanner Service,cmdi

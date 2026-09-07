@@ -1,0 +1,20 @@
+services:
+  devenv:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${TASKRUNNER_PATH:?Set TASKRUNNER_PATH}:/workspace/taskrunner:cached
+
+      # Optional Linux X11 forwarding:
+      # - /tmp/.X11-unix:/tmp/.X11-unix:rw
+
+    # Optional Linux X11 forwarding:
+    # environment:
+    #   DISPLAY: ${DISPLAY:?Set DISPLAY for Linux X11 forwarding}
+
+    # The base development container follows least-privilege defaults.
+    # Docker socket access and added capabilities significantly increase container
+    # privileges. Enable only capabilities that are strictly required for your workflow.
+    # cap_add:
+    #   - NET_ADMIN
+    #   - SYS_ADMIN
+    # privileged: true

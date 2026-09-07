@@ -1,0 +1,10 @@
+{"type": "var_canonical", "key": "entity", "surfaces": ["Entity", "H"], "preferred": "Entity", "hints": {"role": "entity"}}
+{"type": "var_canonical", "key": "entity", "surfaces": ["Entity"], "preferred": "Entity", "hints": {"role": "unknown"}}
+{"type": "var_canonical", "key": "host", "surfaces": ["Host"], "preferred": "Host", "hints": {"role": "host"}}
+{"type": "var_canonical", "key": "id", "surfaces": ["Id"], "preferred": "Id", "hints": {"role": "id"}}
+{"type": "var_canonical", "key": "network", "surfaces": ["Network"], "preferred": "Network", "hints": {"role": "network"}}
+{"type": "var_canonical", "key": "port", "surfaces": ["Port"], "preferred": "Port", "hints": {"role": "port"}}
+{"type": "var_canonical", "key": "privilege", "surfaces": ["Privilege"], "preferred": "Privilege", "hints": {"role": "privilege"}}
+{"type": "var_canonical", "key": "service", "surfaces": ["Service"], "preferred": "Service", "hints": {"role": "service"}}
+{"type": "var_canonical", "key": "uri", "surfaces": ["Uri"], "preferred": "Uri", "hints": {"role": "uri"}}
+{"type": "var_canonical", "key": "user", "surfaces": ["User"], "preferred": "User", "hints": {"role": "user"}}

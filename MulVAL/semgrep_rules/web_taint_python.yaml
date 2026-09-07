@@ -1,0 +1,325 @@
+rules:
+  # --- Command injection: request input reaches a shell/process call ---
+  - id: py-cmdi-user-input-to-shell
+    languages: [python]
+    severity: ERROR
+    message: User-controlled input reaches an OS command (command injection).
+    metadata:
+      vuln_class: cmdi
+      cwe: "CWE-78"
+    mode: taint
+    pattern-sources:
+      - pattern: request.args
+      - pattern: request.query
+      - pattern: request.form
+      - pattern: request.values
+      - pattern: request.GET
+      - pattern: request.POST
+      - pattern: request.cookies
+      - pattern: request.headers
+      - pattern: request.data
+      - pattern: request.get_json(...)
+      - pattern: request.json
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(os\.system|os\.popen|subprocess\.call|subprocess\.run|subprocess\.Popen|subprocess\.check_output)$
+
+  # --- SSRF: request input reaches a server-side HTTP fetcher ---
+  - id: py-ssrf-user-input-to-fetcher
+    languages: [python]
+    severity: ERROR
+    message: User-controlled input reaches a server-side fetch (SSRF).
+    metadata:
+      vuln_class: ssrf
+      cwe: "CWE-918"
+    mode: taint
+    pattern-sources:
+      - pattern: request.args
+      - pattern: request.query
+      - pattern: request.form
+      - pattern: request.values
+      - pattern: request.GET
+      - pattern: request.POST
+      - pattern: request.cookies
+      - pattern: request.headers
+      - pattern: request.data
+      - pattern: request.get_json(...)
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(requests\.get|requests\.post|requests\.request|urllib\.request\.urlopen|urlopen)$
+
+  # --- LFI / path traversal: request input reaches a file read ---
+  - id: py-lfi-user-input-to-open
+    languages: [python]
+    severity: ERROR
+    message: User-controlled input reaches a file read (LFI / path traversal).
+    metadata:
+      vuln_class: path_traversal
+      cwe: "CWE-22"
+    mode: taint
+    pattern-sources:
+      - pattern: request.args
+      - pattern: request.query
+      - pattern: request.form
+      - pattern: request.values
+      - pattern: request.GET
+      - pattern: request.POST
+      - pattern: request.cookies
+      - pattern: request.headers
+      - pattern: request.data
+      - pattern: request.get_json(...)
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(open|send_file|send_from_directory)$
+
+  # --- SQL injection: request input reaches a raw query execute ---
+  - id: py-sqli-user-input-to-query
+    languages: [python]
+    severity: ERROR
+    message: User-controlled input reaches a database query (SQL injection).
+    metadata:
+      vuln_class: sqli
+      cwe: "CWE-89"
+    mode: taint
+    pattern-sources:
+      - pattern: request.args
+      - pattern: request.query
+      - pattern: request.form
+      - pattern: request.values
+      - pattern: request.GET
+      - pattern: request.POST
+      - pattern: request.cookies
+      - pattern: request.headers
+      - pattern: request.data
+      - pattern: request.get_json(...)
+    pattern-sinks:
+      - patterns:
+          - pattern: $CUR.$M(...)
+          - metavariable-regex:
+              metavariable: $M
+              regex: ^(execute|executescript)$
+
+  # --- XSS: request input reaches an HTTP response body without escaping ---
+  - id: py-xss-user-input-to-response
+    languages: [python]
+    severity: ERROR
+    message: User-controlled input reaches the response body without escaping (XSS).
+    metadata:
+      vuln_class: xss
+      cwe: "CWE-79"
+    mode: taint
+    pattern-sources:
+      - pattern: request.args
+      - pattern: request.query
+      - pattern: request.form
+      - pattern: request.values
+      - pattern: request.GET
+      - pattern: request.POST
+      - pattern: request.cookies
+      - pattern: request.headers
+      - pattern: request.data
+      - pattern: request.get_json(...)
+    pattern-sanitizers:
+      - pattern: escape(...)
+      - pattern: markupsafe.escape(...)
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(Response|make_response|Markup|HttpResponse)$
+
+  # --- XXE: request input reaches an XML parser ---
+  - id: py-xxe-user-input-to-xml-parser
+    languages: [python]
+    severity: ERROR
+    message: User-controlled input reaches an XML parser (XXE).
+    metadata:
+      vuln_class: xxe
+      cwe: "CWE-611"
+    mode: taint
+    pattern-sources:
+      - pattern: request.args
+      - pattern: request.form
+      - pattern: request.values
+      - pattern: request.data
+      - pattern: request.files
+      - pattern: request.GET
+      - pattern: request.POST
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(etree\.fromstring|etree\.parse|minidom\.parseString|minidom\.parse|xmltodict\.parse)$
+
+  # --- Auth bypass: unverified JWT header/claim data reaches a network fetch (JWKS/issuer confusion SSRF) ---
+  - id: py-auth-bypass-unverified-jwt-to-fetcher
+    languages: [python]
+    severity: ERROR
+    message: Unverified JWT header/claim data reaches a server-side fetch before signature verification (auth bypass via issuer/JWKS confusion).
+    metadata:
+      vuln_class: auth_bypass
+      cwe: "CWE-347"
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(jwt\.get_unverified_header|jwt\.get_unverified_claims)$
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(requests\.get|requests\.post|requests\.request|urllib\.request\.urlopen|urlopen)$
+
+  # --- SSTI: request input reaches a string template render ---
+  - id: py-ssti-user-input-to-template
+    languages: [python]
+    severity: ERROR
+    message: User-controlled input reaches a string template render (SSTI).
+    metadata:
+      vuln_class: ssti
+      cwe: "CWE-1336"
+    mode: taint
+    pattern-sources:
+      - pattern: request.args
+      - pattern: request.query
+      - pattern: request.form
+      - pattern: request.values
+      - pattern: request.GET
+      - pattern: request.POST
+      - pattern: request.cookies
+      - pattern: request.headers
+      - pattern: request.data
+      - pattern: request.get_json(...)
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(render_template_string|Template)$
+
+  # --- Insecure deserialization: request input reaches an unsafe loader ---
+  - id: py-deserialization-user-input-to-loader
+    languages: [python]
+    severity: ERROR
+    message: User-controlled input reaches an unsafe deserialization loader (insecure deserialization).
+    metadata:
+      vuln_class: deserialization
+      cwe: "CWE-502"
+    mode: taint
+    pattern-sources:
+      - pattern: request.args
+      - pattern: request.form
+      - pattern: request.values
+      - pattern: request.data
+      - pattern: request.cookies
+      - pattern: request.GET
+      - pattern: request.POST
+    pattern-sinks:
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: ^(pickle\.loads|pickle\.load|cPickle\.loads|yaml\.load|yaml\.unsafe_load|jsonpickle\.decode)$
+
+  # ==========================================================================
+  # Tier-2 heuristic rules (evidence_tier: heuristic).
+  # These fire on a dangerous sink SHAPE (dynamically-built argument) without a
+  # proven source->sink dataflow, so they catch interprocedural bugs the free
+  # engine can't taint-track. The parser emits sink_evidence(...) (not taint_flow),
+  # and the web KB confirms them only at low confidence and only when the app also
+  # exposes user input.
+  # ==========================================================================
+  - id: py-heuristic-sqli-dynamic-query
+    languages: [python]
+    severity: WARNING
+    message: Dynamically-constructed SQL string passed to a cursor execute (possible SQL injection).
+    metadata:
+      vuln_class: sqli
+      evidence_tier: heuristic
+      cwe: "CWE-89"
+    patterns:
+      - pattern-either:
+          - pattern: $CUR.execute(f"...", ...)
+          - pattern: $CUR.execute("..." % ..., ...)
+          - pattern: $CUR.execute("..." + $X, ...)
+          - pattern: $CUR.execute("...".format(...), ...)
+          - pattern: $CUR.executescript(f"...")
+
+  - id: py-heuristic-cmdi-dynamic-command
+    languages: [python]
+    severity: WARNING
+    message: Dynamically-constructed OS command (possible command injection).
+    metadata:
+      vuln_class: cmdi
+      evidence_tier: heuristic
+      cwe: "CWE-78"
+    patterns:
+      - pattern-either:
+          - pattern: os.system(f"...")
+          - pattern: os.system("..." % ...)
+          - pattern: os.system("..." + $X)
+          - pattern: os.popen(f"...")
+          - pattern: subprocess.$M(..., shell=True)
+          - pattern: subprocess.$M(f"...", ...)
+
+  - id: py-heuristic-ssti-nonliteral-render
+    languages: [python]
+    severity: WARNING
+    message: Non-literal value rendered as a template (possible SSTI).
+    metadata:
+      vuln_class: ssti
+      evidence_tier: heuristic
+      cwe: "CWE-1336"
+    patterns:
+      - pattern-either:
+          - pattern: render_template_string($X, ...)
+          - pattern: render_template_string($X)
+      - pattern-not: render_template_string("...", ...)
+      - pattern-not: render_template_string("...")
+
+  - id: py-heuristic-path-traversal-dynamic
+    languages: [python]
+    severity: WARNING
+    message: Dynamically-constructed file path opened (possible path traversal / LFI).
+    metadata:
+      vuln_class: path_traversal
+      evidence_tier: heuristic
+      cwe: "CWE-22"
+    patterns:
+      - pattern-either:
+          - pattern: open($X + $Y, ...)
+          - pattern: open(f"...", ...)
+          - pattern: open($X + $Y)
+          - pattern: open(f"...")
+
+  - id: py-heuristic-deserialization-unsafe-loader
+    languages: [python]
+    severity: WARNING
+    message: Unsafe deserialization loader used (possible insecure deserialization).
+    metadata:
+      vuln_class: deserialization
+      evidence_tier: heuristic
+      cwe: "CWE-502"
+    patterns:
+      - pattern-either:
+          - pattern: pickle.loads(...)
+          - pattern: pickle.load(...)
+          - pattern: cPickle.loads(...)
+          - pattern: yaml.unsafe_load(...)
+          - pattern: yaml.load($X)
+      - pattern-not: yaml.load($X, Loader=yaml.SafeLoader)
+      - pattern-not: yaml.load($X, yaml.SafeLoader)

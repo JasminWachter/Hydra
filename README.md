@@ -1,0 +1,115 @@
+# HYDRA — HYbrid ReAsoner
+
+Hydra integrates MulVAL attack-path reasoning with the CAI cybersecurity agent
+framework. It combines scanner evidence, symbolic attack-graph generation, and
+agentic execution without redistributing the upstream CAI source tree.
+
+## Architecture
+
+1. Trivy, Semgrep, and Nmap produce security evidence.
+2. The pipeline in `MulVAL/` converts that evidence into MulVAL predicates.
+3. MulVAL/XSB generates attack paths in `paths.json`.
+4. The patched CAI 0.5.5 CLI loads the path index and starts the hybrid reasoner.
+5. The agent retrieves full path steps on demand with `get_attack_path(path_id)`.
+
+Hydra-owned runtime code is stored in `MulVAL/`. CAI integration changes are
+distributed only as `patches/cai-0.5.5-hydra.patch`.
+
+## CAI dependency and patch
+
+The unmodified Python dependency is pinned in `requirements.txt` as
+`cai-framework==0.5.5`:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Native hybrid CLI functionality requires applying the Hydra patch to the exact
+CAI 0.5.5 source revision used for development:
+
+```bash
+git clone https://github.com/aliasrobotics/cai.git cai-0.5.5
+cd cai-0.5.5
+git checkout --detach 6d47ccc2d282d6ec42243aa524019adb6bf48127
+git apply --check ../hydra/patches/cai-0.5.5-hydra.patch
+git apply ../hydra/patches/cai-0.5.5-hydra.patch
+python -m pip install -e .
+```
+
+The patch SHA-256 and verification results are recorded in
+`RELEASE_VERIFICATION.md`. The container build performs the same checkout,
+hash verification, patch application, and installation automatically.
+
+## Container environment
+
+Build and start the default development container from the repository root:
+
+```bash
+docker compose -f .devcontainer/docker-compose.yml build devenv
+docker compose -f .devcontainer/docker-compose.yml up -d devenv
+```
+
+GPU access and elevated Docker capabilities are not enabled by default. Put
+machine-specific settings in an untracked Compose override.
+
+For local models without external trace export, set both tracing controls:
+
+```bash
+export CAI_TRACING=false
+export OPENAI_AGENTS_DISABLE_TRACING=true
+```
+
+These variables control separate CAI and Agents SDK tracing paths.
+
+The value `sk-1234` appearing in the example environment, container build
+verification, and local-model benchmark helper is an intentionally non-secret
+placeholder required by OpenAI-compatible clients that reject an empty API key.
+Replace it with a real credential only when connecting to a hosted provider.
+
+## Run hybrid reasoning
+
+After installing the patched CAI checkout:
+
+```bash
+cai --hybrid-reasoning --hybrid-mode standard --hybrid-target 127.0.0.1
+```
+
+Useful options:
+
+- `--hybrid-paths-file <file>` selects a specific `paths.json`.
+- `--hybrid-query "<text>"` overrides the default prompt.
+- `--hybrid-max-turns <n>` sets the runner turn limit.
+- `--hybrid-scan-before-run` runs the scanner pipeline first.
+- `--hybrid-mode ctf` selects the CTF-oriented prompt and rules.
+
+## Generate MulVAL paths directly
+
+```bash
+python MulVAL/generate_predicates.py \
+  --target /path/to/target \
+  --output ./graphs \
+  --scanners trivy,semgrep,nmap \
+  --rules MulVAL/kb/web_security_rules.P
+```
+
+The primary output consumed by hybrid reasoning is `graphs/paths.json`.
+
+## Supporting modules
+
+- `interaction_rule_generation/` contains the ATT&CK-to-MulVAL rule-generation
+  workflow.
+- `benchmarking/` contains attack-graph and agent evaluation tooling.
+- `patches/` contains the reviewed CAI integration patch.
+
+## Licensing and provenance
+
+CAI is fetched from its official upstream repository and is not bundled here.
+Its original license, MIT notice, citation metadata, and disclaimer are retained
+under `licenses/CAI/`. Applying the Hydra patch does not replace or relax CAI's
+upstream terms.
+
+MulVAL licensing is preserved in `MulVAL/LICENSE-MULVAL`. The pinned MITRE
+ATT&CK dataset source, hashes, copyright notice, and terms are documented in
+`licenses/MITRE-ATTACK.md`.
+Hydra is not affiliated with or endorsed by Alias Robotics, and this repository
+does not publish the `cai-framework` distribution.

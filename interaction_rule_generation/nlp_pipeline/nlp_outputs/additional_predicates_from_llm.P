@@ -1,0 +1,299 @@
+% ---- Auto-exported LLM-origin predicates (primitive declarations) ----
+% Source: nlp_inputs/predicates_core.jsonl
+
+% abuse_accessibility_features/1  (origin: llm, status: experimental)
+primitive(abuse_accessibility_features(Host)).
+
+% actual_file_type/2  (origin: llm, status: experimental)
+primitive(actual_file_type(File, MaliciousType)).
+
+% allows_traffic/2  (origin: llm, status: experimental)
+primitive(allows_traffic(Device, Arg1)).
+
+% analysis_env_detected/1  (origin: llm, status: experimental)
+primitive(analysis_env_detected(Host)).
+
+% api_call/3  (origin: llm, status: experimental)
+primitive(api_call(Host, Arg1, _)).
+
+% attacker_modifies_app/2  (origin: llm, status: experimental)
+primitive(attacker_modifies_app(App, Host)).
+
+% attacker_sends_packet/3  (origin: llm, status: experimental)
+primitive(attacker_sends_packet(Reflector, Target, _Packet)).
+
+% benign_file/1  (origin: llm, status: experimental)
+primitive(benign_file(File)).
+
+% block_reporting_message/1  (origin: llm, status: experimental)
+primitive(block_reporting_message(Host)).
+
+% browser_history_detected/1  (origin: llm, status: experimental)
+primitive(browser_history_detected(Host)).
+
+% bypasses_app_control/1  (origin: llm, status: experimental)
+primitive(bypasses_app_control(Host)).
+
+% clear_command_history/2  (origin: llm, status: experimental)
+primitive(clear_command_history(Host, User)).
+
+% command_executed/3  (origin: llm, status: experimental)
+primitive(command_executed(Host, User, User)).
+
+% compress_data/2  (origin: llm, status: experimental)
+primitive(compress_data(Host, DataKind)).
+
+% compromised_device/1  (origin: llm, status: experimental)
+primitive(compromised_device(Host)).
+
+% compromised_social_media_account/1  (origin: llm, status: experimental)
+primitive(compromised_social_media_account(User)).
+
+% connected_removable_media/2  (origin: llm, status: experimental)
+primitive(connected_removable_media(Host, Media)).
+
+% contains_malicious_payload/1  (origin: llm, status: experimental)
+primitive(contains_malicious_payload(File)).
+
+% creates_instance_in_region/3  (origin: llm, status: experimental)
+primitive(creates_instance_in_region(User, Provider, Region)).
+
+% decompiled_and_rebuilt/2  (origin: llm, status: experimental)
+primitive(decompiled_and_rebuilt(App, Host)).
+
+% decrypts_successfully/2  (origin: llm, status: experimental)
+primitive(decrypts_successfully(Payload, Host)).
+
+% delay_execution/1  (origin: llm, status: experimental)
+primitive(delay_execution(Host)).
+
+% direct_installation/1  (origin: llm, status: experimental)
+primitive(direct_installation(Host)).
+
+% disable_security_tool/1  (origin: llm, status: experimental)
+primitive(disable_security_tool(Host)).
+
+% disposable_email_used/1  (origin: llm, status: experimental)
+primitive(disposable_email_used(EmailAccount)).
+
+% dll_search_order_hijacking/2  (origin: llm, status: experimental)
+primitive(dll_search_order_hijacking(Host, Arg1)).
+
+% dll_side_loading/2  (origin: llm, status: experimental)
+primitive(dll_side_loading(Host, Arg1)).
+
+% dyld_insert_libraries_hook_installed/1  (origin: llm, status: experimental)
+primitive(dyld_insert_libraries_hook_installed(Host)).
+
+% dynamic_parameters/4  (origin: llm, status: experimental)
+primitive(dynamic_parameters(Host, Domain, IP, Port)).
+
+% dynamic_resolution/1  (origin: llm, status: experimental)
+primitive(dynamic_resolution(Host)).
+
+% email_account_created/1  (origin: llm, status: experimental)
+primitive(email_account_created(EmailAccount)).
+
+% encrypt_data/2  (origin: llm, status: experimental)
+primitive(encrypt_data(Host, DataKind)).
+
+% encrypted_traffic/2  (origin: llm, status: experimental)
+primitive(encrypted_traffic(Host, Protocol)).
+
+% file_contains_embedded_payload/2  (origin: llm, status: experimental)
+primitive(file_contains_embedded_payload(File, Host)).
+
+% file_count_detected/1  (origin: llm, status: experimental)
+primitive(file_count_detected(Host)).
+
+% file_dropped/2  (origin: llm, status: experimental)
+primitive(file_dropped(Host, FilePath)).
+
+% file_transfer_tool_installed/2  (origin: llm, status: experimental)
+primitive(file_transfer_tool_installed(Host, Tool)).
+
+% filter_criteria_met/2  (origin: llm, status: experimental)
+primitive(filter_criteria_met(Host, _Packet)).
+
+% gather_victim_org_info/2  (origin: llm, status: experimental)
+primitive(gather_victim_org_info(Attacker, Victim)).
+
+% grants_permission/3  (origin: llm, status: experimental)
+primitive(grants_permission(Host, User, Permission)).
+
+% hook_procedure_installed/1  (origin: llm, status: experimental)
+primitive(hook_procedure_installed(Host)).
+
+% iat_hook_installed/1  (origin: llm, status: experimental)
+primitive(iat_hook_installed(Host)).
+
+% infrastructure_acquired/1  (origin: llm, status: experimental)
+primitive(infrastructure_acquired(Host)).
+
+% inline_hook_installed/1  (origin: llm, status: experimental)
+primitive(inline_hook_installed(Host)).
+
+% jailbroken/1  (origin: llm, status: experimental)
+primitive(jailbroken(Host)).
+
+% jam_signal/2  (origin: llm, status: experimental)
+primitive(jam_signal(Network, Host)).
+
+% known_exclusion_path/1  (origin: llm, status: experimental)
+primitive(known_exclusion_path(FilePath)).
+
+% ld_preload_hook_installed/1  (origin: llm, status: experimental)
+primitive(ld_preload_hook_installed(Host)).
+
+% malicious_app_installed/2  (origin: llm, status: experimental)
+primitive(malicious_app_installed(Host, App)).
+
+% manipulate_app_store_rankings_or_ratings/1  (origin: llm, status: experimental)
+primitive(manipulate_app_store_rankings_or_ratings(Host)).
+
+% matches_environment/2  (origin: llm, status: experimental)
+primitive(matches_environment(Host, Environment)).
+
+% misleading_name/1  (origin: llm, status: experimental)
+primitive(misleading_name(Host)).
+
+% modify_account/2  (origin: llm, status: experimental)
+primitive(modify_account(User, Host)).
+
+% modify_malware/3  (origin: llm, status: experimental)
+primitive(modify_malware(Host, Malware, NewMalware)).
+
+% modify_system_image/1  (origin: llm, status: experimental)
+primitive(modify_system_image(Host)).
+
+% monitored_region/2  (origin: llm, status: experimental)
+primitive(monitored_region(Arg0, Arg1)).
+
+% mouse_movement_detected/1  (origin: llm, status: experimental)
+primitive(mouse_movement_detected(Host)).
+
+% mutex_associated_with_malware/1  (origin: llm, status: experimental)
+primitive(mutex_associated_with_malware(MutexName)).
+
+% mutex_exists/2  (origin: llm, status: experimental)
+primitive(mutex_exists(Host, MutexName)).
+
+% mutex_present/2  (origin: llm, status: experimental)
+primitive(mutex_present(Host, MutexName)).
+
+% nat_configurable/1  (origin: llm, status: experimental)
+primitive(nat_configurable(Host)).
+
+% nat_traversal/1  (origin: llm, status: experimental)
+primitive(nat_traversal(Host)).
+
+% needs_compilation/1  (origin: llm, status: experimental)
+primitive(needs_compilation(Host)).
+
+% network_device/1  (origin: llm, status: experimental)
+primitive(network_device(Host)).
+
+% obfuscates_traffic/1  (origin: llm, status: experimental)
+primitive(obfuscates_traffic(Host)).
+
+% open_wifi/2  (origin: llm, status: experimental)
+primitive(open_wifi(Network, SSID)).
+
+% paas_service/1  (origin: llm, status: experimental)
+primitive(paas_service(Host)).
+
+% packet_matches_filter/1  (origin: llm, status: experimental)
+primitive(packet_matches_filter(Host)).
+
+% persona_cultivated/1  (origin: llm, status: experimental)
+primitive(persona_cultivated(EmailAccount)).
+
+% prolonged_information_gathering/1  (origin: llm, status: experimental)
+primitive(prolonged_information_gathering(Host)).
+
+% protocol_amplifies/1  (origin: llm, status: experimental)
+primitive(protocol_amplifies(Protocol)).
+
+% protocol_contains_junk/1  (origin: llm, status: experimental)
+primitive(protocol_contains_junk(Protocol)).
+
+% receives_mobile_data/2  (origin: llm, status: experimental)
+primitive(receives_mobile_data(MobileCarrier, User)).
+
+% removable_media_infection/1  (origin: llm, status: experimental)
+primitive(removable_media_infection(Host)).
+
+% replace_compiled_release/2  (origin: llm, status: experimental)
+primitive(replace_compiled_release(App, Host)).
+
+% rooted/1  (origin: llm, status: experimental)
+primitive(rooted(Host)).
+
+% security_app/1  (origin: llm, status: experimental)
+primitive(security_app(App)).
+
+% security_software_discovery/1  (origin: llm, status: experimental)
+primitive(security_software_discovery(Host)).
+
+% sends_mass_emails/1  (origin: llm, status: experimental)
+primitive(sends_mass_emails(Host)).
+
+% signal_jammer_in_range/2  (origin: llm, status: experimental)
+primitive(signal_jammer_in_range(Network, Host)).
+
+% signal_packet_sequence_detected/2  (origin: llm, status: experimental)
+primitive(signal_packet_sequence_detected(Host, Port)).
+
+% sms_pumping_attack/1  (origin: llm, status: experimental)
+primitive(sms_pumping_attack(Host)).
+
+% spoof_security_alerting/1  (origin: llm, status: experimental)
+primitive(spoof_security_alerting(Host)).
+
+% spoofed_packet/2  (origin: llm, status: experimental)
+primitive(spoofed_packet(Network, Target)).
+
+% spoofed_status/2  (origin: llm, status: experimental)
+primitive(spoofed_status(Host, Arg1)).
+
+% steal_cert/2  (origin: llm, status: experimental)
+primitive(steal_cert(Host, Arg1)).
+
+% theft/3  (origin: llm, status: experimental)
+primitive(theft(Attacker, Party, Capability)).
+
+% uri_points_to_malicious_content/1  (origin: llm, status: experimental)
+primitive(uri_points_to_malicious_content(Uri)).
+
+% used_in_phase/2  (origin: llm, status: experimental)
+primitive(used_in_phase(Capability, Phase)).
+
+% user_accesses_content/2  (origin: llm, status: experimental)
+primitive(user_accesses_content(User, Host)).
+
+% user_activity_check/1  (origin: llm, status: experimental)
+primitive(user_activity_check(Host)).
+
+% user_interaction_required/1  (origin: llm, status: experimental)
+primitive(user_interaction_required(Host)).
+
+% uses_api_hammering/1  (origin: llm, status: experimental)
+primitive(uses_api_hammering(Host)).
+
+% uses_benign_commands/1  (origin: llm, status: experimental)
+primitive(uses_benign_commands(Host)).
+
+% uses_legitimate_service/2  (origin: llm, status: experimental)
+primitive(uses_legitimate_service(Host, Service)).
+
+% uses_scheduled_tasks/1  (origin: llm, status: experimental)
+primitive(uses_scheduled_tasks(Host)).
+
+% uses_sleep_command/1  (origin: llm, status: experimental)
+primitive(uses_sleep_command(Host)).
+
+% vulnerability_exploit/1  (origin: llm, status: experimental)
+primitive(vulnerability_exploit(Host)).
+
+% vulnerable_browser/1  (origin: llm, status: experimental)
+primitive(vulnerable_browser(Host)).

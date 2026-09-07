@@ -1,0 +1,454 @@
+%UNDER GNU GPL
+
+/******************************************************/
+/****         Core Predicates (Enterprise Domain)       *****/
+/******************************************************/
+
+% Declares a host or asset
+primitive(host(_H)).
+
+% Attacker has access to network segment Net
+primitive(attacker_at(_Net)).
+
+% Network path from Net to host H on Port
+primitive(connects(_Net, _H, _Port)).
+
+% Host Src can reach host Dst on Port
+primitive(reachable(_Src, _Dst, _Port)).
+
+% Network service running
+primitive(service(_H, _Port, _Proto, _Svc, _Version)).
+
+% Service is externally reachable
+primitive(exposed(_H, _Port)).
+
+% OS or platform
+primitive(os(_H, _OS)).
+
+% Asset role (app, db, dc, plc, etc.)
+primitive(role(_H, _Role)).
+
+
+/******************************************************/
+/****         Software, Configuration & Vulnerabilities *****/
+/******************************************************/
+
+% Installed package
+primitive(pkg(_H, _Name, _Version)).
+
+% Config parameter
+primitive(setting(_H, _Key, _Value)).
+
+% Vulnerability exists on asset
+primitive(vuln(_H, _CVE, _Artifact)).
+
+% CVE has a working exploit
+primitive(exploit_possible(_CVE)).
+
+% CVE affects service
+primitive(service_matches(_CVE, _Svc)).
+
+% Local (priv-esc) vuln present
+primitive(local_vuln(_H, _CVE)).
+
+% Non-CVE weakness
+primitive(misconfig(_H, _Issue)).
+
+
+/******************************************************/
+/****         Identity, Auth & Privilege              *****/
+/******************************************************/
+
+% User account exists
+primitive(user_on_host(_User, _H)).
+
+% Credential known/available
+primitive(cred(_User, _Scope, _Type)).
+
+% Host accepts auth method
+primitive(auth_possible(_H, _User, _Method)).
+
+% Pass-the-hash works
+primitive(accepts_hash(_H, _User)).
+
+% User privilege level
+primitive(perm(_H, _User, _Priv)).
+
+% Implicit trust or delegation
+primitive(trust(_H1, _H2, _Mechanism)).
+
+
+/******************************************************/
+/****         Execution, Persistence & Defense Evasion  *****/
+/******************************************************/
+
+% Code executed as user
+primitive(exec(_H, _User)).
+
+% Host compromised at privilege level
+primitive(compromise(_H, _Level)).
+
+% Persistence established
+primitive(persistence(_H, _Method)).
+
+% Local privilege escalation
+primitive(priv_escalation(_H, _From, _To)).
+
+% Disabled defense
+primitive(defense_disabled(_H, _Control)).
+
+% Captured sensitive artifact
+primitive(loot(_H, _Kind, _Id)).
+
+
+/******************************************************/
+/****         Collection, Exfiltration & Command and Control *****/
+/******************************************************/
+
+% Host holds sensitive data
+primitive(has_data(_H, _DataKind)).
+
+% Command-and-control channel established
+primitive(c2_channel(_H, _Proto)).
+
+% Data exfiltrated
+primitive(exfiltrated(_H, _DataKind, _Channel)).
+
+
+/******************************************************/
+/****         Observations & Evidence                 *****/
+/******************************************************/
+
+% Observed event mapped to ATT&CK
+primitive(event(_H, _Tactic, _TechniqueID, _EvidenceID)).
+
+% Telemetry available
+primitive(sensor(_H, _Type)).
+
+
+/******************************************************/
+/****         Cloud Extensions                        *****/
+/******************************************************/
+
+% Cloud account
+primitive(cloud_account(_Acct, _Provider)).
+
+% IAM principal
+primitive(iam_principal(_Principal, _Acct)).
+
+% IAM policy
+primitive(iam_policy(_Principal, _Action, _Resource, _Effect)).
+
+% Cloud credential
+primitive(cloud_cred(_Principal, _Type)).
+
+% Metadata access
+primitive(metadata_access(_H, _Provider)).
+
+
+/******************************************************/
+/****         Mobile Extensions                       *****/
+/******************************************************/
+
+% Mobile device asset
+primitive(device(_D)).
+
+% App installed
+primitive(app_installed(_D, _App, _Version)).
+
+% Mobile permission
+primitive(mobile_perm(_App, _Permission)).
+
+% MDM enrollment
+primitive(mdm_enrolled(_D, _Vendor)).
+
+
+/******************************************************/
+/****         ICS / OT Extensions                     *****/
+/******************************************************/
+
+% PLC asset
+primitive(plc(_P)).
+
+% ICS protocol
+primitive(protocol(_P, _Proto, _Port)).
+
+% PLC ladder logic
+primitive(ladder_logic(_P, _Program)).
+
+% Safety Instrumented System
+primitive(safety_instrumented(_SIS)).
+
+
+/*************************************************/
+
+
+/******************/
+/**            Derived Predicates               **/
+/******************/
+
+% --- Reachability shortcuts & closure ---
+
+% External exposure from any attacker-controlled segment
+derived(exposed(H, Port)).
+exposed(H, Port) :-
+    attacker_at(Net),
+    connects(Net, H, Port).
+
+% Base & transitive lateral reachability
+derived(reachable(Src, Dst, Port)).
+reachable(Src, Dst, Port) :-
+    connects(Src, Dst, Port).
+
+reachable(Src, Dst, Port) :-
+    reachable(Src, Mid, Port),
+    connects(Mid, Dst, Port).
+
+% --- Vulnerability composition helpers ---
+
+% A service instance is affected by an exploitable CVE
+derived(remote_service_vulnerable(H, Port, CVE, Svc)).
+remote_service_vulnerable(H, Port, CVE, Svc) :-
+    service(H, Port, _Proto, Svc, _Version),
+    vuln(H, CVE, Svc),
+    service_matches(CVE, Svc),
+    exploit_possible(CVE).
+
+% Local privilege-escalation opportunity
+derived(local_pe_vulnerable(H, CVE)).
+local_pe_vulnerable(H, CVE) :-
+    local_vuln(H, CVE),
+    exploit_possible(CVE).
+
+% --- Authentication & identity helpers ---
+
+% Simple notion of "valid account" for a host/scope
+derived(valid_account(User, Host)).
+valid_account(User, Host) :-
+    user_on_host(User, Host).
+
+% Credentials that can be used for auth to a host
+derived(auth_usable_cred(User, Host, Method)).
+auth_usable_cred(User, Host, Method) :-
+    cred(User, Host, _Type),
+    auth_possible(Host, User, Method).
+
+% Pass-the-hash feasibility
+derived(pth_feasible(Host, User)).
+pth_feasible(Host, User) :-
+    cred(User, Host, hash),
+    accepts_hash(Host, User).
+
+% --- Execution & compromise enablers ---
+
+% Remote code execution via exposed vulnerable service
+derived(exec_possible_remote(H, User)).
+exec_possible_remote(H, www_user) :-
+    attacker_at(Net),
+    connects(Net, H, Port),
+    remote_service_vulnerable(H, Port, _CVE, _Svc).
+
+% User-driven (phishing/SE) execution path (leave SE success as fact)
+derived(exec_possible_user(H, User)).
+exec_possible_user(H, User) :-
+    user_on_host(User, H),
+    auth_possible(H, User, _Method),
+    user_phishes_success(User).
+
+% Compromise follows from execution (conservative default)
+derived(compromise_from_exec(H, Level)).
+compromise_from_exec(H, user) :- exec(H, _AnyUser).
+
+% Priv-esc derived effect
+derived(compromise_from_pe(H, To)).
+compromise_from_pe(H, To) :-
+    priv_escalation(H, _From, To).
+
+% --- Persistence & defense effects ---
+
+derived(persistence_enables_reentry(H)).
+persistence_enables_reentry(H) :-
+    persistence(H, _Method).
+
+derived(weakened_defense(H)).
+weakened_defense(H) :-
+    defense_disabled(H, _Control).
+
+% --- ICS helpers ---
+
+derived(ics_endpoint(P, Port)).
+ics_endpoint(P, Port) :-
+    plc(P),
+    protocol(P, _Proto, Port).
+
+derived(ics_exposed_endpoint(P, Port)).
+ics_exposed_endpoint(P, Port) :-
+    attacker_at(Net),
+    connects(Net, P, Port),
+    ics_endpoint(P, Port).
+
+
+/******************/
+/**            Canonical consequence rules         **/
+/******************/
+
+% Remote service exploit → execution → compromise
+exec(H, www_user) :-
+    attacker_at(Net),
+    connects(Net, H, Port),
+    remote_service_vulnerable(H, Port, _CVE, _Svc).
+
+compromise(H, user) :-
+    exec(H, _).
+
+% User/social engineering path
+exec(H, User) :-
+    exec_possible_user(H, User).
+
+compromise(H, user) :-
+    exec_possible_user(H, _).
+
+% Local privilege escalation
+priv_escalation(H, From, To) :-
+    exec(H, _),
+    local_pe_vulnerable(H, _CVE),
+    % optionally require current privilege = From
+    nonvar(From), nonvar(To).
+
+compromise(H, To) :-
+    priv_escalation(H, _From, To).
+
+% Pass-the-hash lateral move
+exec(Dst, User) :-
+    pth_feasible(Dst, User),
+    reachable(Src, Dst, 445).
+
+compromise(Dst, user) :-
+    pth_feasible(Dst, _),
+    reachable(_Src, Dst, 445).
+
+% ICS exposed endpoint (placeholder consequence; refine per technique)
+compromise(P, user) :-
+    ics_exposed_endpoint(P, _Port).
+
+
+/******************/
+/**                  Meta Annotations              **/
+/******************/
+% Machine-readable metadata to keep the KB lean and traceable.
+
+% technique(TID, Name, Domain, Tactics, Platforms, URL, STIX_ID).
+meta(technique(_Tid, _Name, _Domain, _Tactics, _Platforms, _Url, _StixId)).
+
+% severity(TID, Level) and confidence(TID, Level)
+% Level ∈ {low, medium, high, critical}
+meta(severity(_Tid, _Level)).
+meta(confidence(_Tid, _Level)).
+
+% data_source(TID, Source) and detection_hint(TID, Text)
+meta(data_source(_Tid, _Source)).
+meta(detection_hint(_Tid, _Text)).
+
+% rule_map(TID, RuleTag) – points a technique to a canonical rule/consequence
+% e.g., RuleTag ∈ {remote_exec, user_exec, priv_esc, pth_lateral, ics_exposed, persistence}
+meta(rule_map(_Tid, _RuleTag)).
+
+% grouping for fused techniques: fuse_id(FuseKey, Tid)
+meta(fuse_id(_FuseKey, _Tid)).
+
+% provenance: which file emitted a rule originally (useful before merging)
+meta(source_file(_Tid, _Path)).
+
+% Example meta facts (keep in a separate .meta if preferred):
+% meta(technique('T0800','Activate Firmware Update Mode','ics','inhibit-response-function','None',
+%                'https://attack.mitre.org/techniques/T0800',
+%                'attack-pattern--19a71d1e-6334-4233-8260-b749cae37953')).
+% meta(rule_map('T0800', ics_exposed)).
+% meta(severity('T0800', high)).
+% meta(confidence('T0800', medium)).
+% meta(data_source('T0800', 'Network Traffic')).
+% meta(detection_hint('T0800', 'Monitor unexpected transitions to firmware update mode on PLCs')).
+
+
+/******************/
+/**        Legacy Compatibility (Adapters)         **/
+/******************/
+% Keep or tweak as needed if you still ingest classic MulVAL facts.
+
+% connects(Net,H,Port) from legacy hacl/attackerAt
+derived(connects(_Net, _H, _Port)).  % declaration for tooling
+connects(Net, H, Port) :-
+    attackerAt(Attacker),
+    hacl(Attacker, H, Port, tcp),
+    % bind attacker segment to a symbolic Net (if you model segments)
+    Net = internet.
+
+% service/5 from legacy networkServiceInfo/5
+derived(service(_H, _P, _Proto, _App, _Ver)).
+service(H, P, tcp, App, Ver) :-
+    networkServiceInfo(H, P, tcp, App, Ver).
+
+% vuln/3 from legacy vulExists/4
+derived(vuln(_H, _CVE, _Artifact)).
+vuln(H, CVE, App) :-
+    vulExists(H, App, CVE, App).
+
+% compromise/2 from execCode/2
+derived(compromise(_H, _Priv)).
+compromise(H, Priv) :-
+    execCode(H, Priv).
+
+
+/******************/
+/**            Tabling directives (XSB/MulVAL)    **/
+/******************/
+
+% NOTE:
+% - Keep these BEFORE the corresponding predicate definitions.
+% - If your engine supports incremental tabling (XSB ≥3.8) and you
+%   update base facts at runtime, you can switch to the as incremental
+%   variants shown below (commented).
+
+:- table exposed/2.
+:- table reachable/3.
+:- table remote_service_vulnerable/4.
+:- table local_pe_vulnerable/2.
+:- table valid_account/2.
+:- table auth_usable_cred/3.
+:- table pth_feasible/2.
+:- table exec_possible_remote/2.
+:- table exec_possible_user/2.
+:- table compromise_from_exec/2.
+:- table compromise_from_pe/2.
+:- table persistence_enables_reentry/1.
+:- table weakened_defense/1.
+:- table ics_endpoint/2.
+:- table ics_exposed_endpoint/2.
+
+% If you also define these via rules in the same KB, table them too to
+% break cycles and cache results (recommended):
+:- table exec/2.
+:- table compromise/2.
+:- table priv_escalation/3.
+
+% -------- Optional (XSB) incremental variants --------
+% Uncomment these instead of the plain :- table ... lines if you want
+% derived answers to re-compute automatically when base facts change.
+% :- table exposed/2               as incremental.
+% :- table reachable/3             as incremental.
+% :- table remote_service_vulnerable/4 as incremental.
+% :- table local_pe_vulnerable/2   as incremental.
+% :- table valid_account/2         as incremental.
+% :- table auth_usable_cred/3      as incremental.
+% :- table pth_feasible/2          as incremental.
+% :- table exec_possible_remote/2  as incremental.
+% :- table exec_possible_user/2    as incremental.
+% :- table compromise_from_exec/2  as incremental.
+% :- table compromise_from_pe/2    as incremental.
+% :- table persistence_enables_reentry/1 as incremental.
+% :- table weakened_defense/1      as incremental.
+% :- table ics_endpoint/2          as incremental.
+% :- table ics_exposed_endpoint/2  as incremental.
+% :- table exec/2                  as incremental.
+% :- table compromise/2            as incremental.
+% :- table priv_escalation/3       as incremental.
