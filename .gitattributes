@@ -1,3 +1,6 @@
 # Preserve the reviewed patch bytes so its documented SHA-256 remains stable
 # in Git archives on every platform.
 patches/cai-0.5.5-hydra.patch -text
+
+# Classify generated and curated rule files as Datalog on GitHub.
+*.rule linguist-language=Datalog
