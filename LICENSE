@@ -7,13 +7,17 @@ This project combines components distributed under different terms. CAI source i
 ---
 ## 1. MIT-Licensed Components
 
-This repo was forked from Alias Robotics CAI. Portions of the CAI project are derived from openai/openai-agents-python, available under the MIT License. The original MIT-licensed code can be found in the `src/cai/agents` directory. 
+This repository integrates with Alias Robotics CAI through the patch in
+`patches/cai-0.5.5-hydra.patch`; the upstream CAI source tree is not bundled.
+Portions of upstream CAI are derived from `openai/openai-agents-python` and are
+available under the MIT License. The corresponding original code is available
+in upstream CAI under `src/cai/agents`.
 
-Full MIT License included in the separate file `LICENSE-MIT` in the respective `CAI` directory. 
+The full upstream MIT License is retained in `licenses/CAI/LICENSE-MIT`.
 
 ---
 
-## 2. Proprietary Additions
+## 2. CAI Research-Use Components
 
 The CAI files reconstructed by `patches/cai-0.5.5-hydra.patch` remain subject to the upstream CAI terms, including the following research-use terms for Alias Robotics S.L. components:
 
