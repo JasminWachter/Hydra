@@ -4,6 +4,24 @@ Hydra integrates MulVAL attack-path reasoning with the CAI cybersecurity agent
 framework. It combines scanner evidence, symbolic attack-graph generation, and
 agentic execution without redistributing the upstream CAI source tree.
 
+> [!IMPORTANT]
+> **CAI maintenance status:** The upstream CAI repository was archived on
+> August 28, 2026 and is no longer actively maintained. Hydra pins CAI 0.5.5 as
+> a research dependency; users should not expect upstream bug fixes, security
+> patches, compatibility updates, or support.
+
+> [!WARNING]
+> **Safety and data handling:** LLM agents can invoke tools and cause unexpected
+> or disruptive actions. Run Hydra only in an isolated, disposable environment,
+> with least-privilege access, and only against systems you are explicitly
+> authorized to test. Depending on configuration, prompts, tool inputs and
+> outputs, target information, files, and other context may flow to third-party
+> LLM providers, tool services, or telemetry and tracing systems. Do not provide
+> sensitive, confidential, personal, or otherwise restricted data. Review the
+> policies and data-flow settings of every configured provider and service
+> before use; disabling tracing does not prevent data from being sent to the
+> selected model provider.
+
 ## Architecture
 
 1. Trivy, Semgrep, and Nmap produce security evidence.
@@ -113,3 +131,32 @@ ATT&CK dataset source, hashes, copyright notice, and terms are documented in
 `licenses/MITRE-ATTACK.md`.
 Hydra is not affiliated with or endorsed by Alias Robotics, and this repository
 does not publish the `cai-framework` distribution.
+
+## Reproducibility release
+
+The repository state used for the RAISE paper is pinned as the
+[Release RAISE paper](https://github.com/JasminWachter/Hydra/releases/tag/raise-paper-release)
+artifact. Use that release, rather than the moving `main` branch, when
+reproducing the published setup.
+
+## Citation
+
+Hydra accompanies the paper *Automating Attack Graph Construction for Agentic
+Pentesting: Towards Neuro-Symbolic Vulnerability Hunting*, presented at the
+[RAISE Workshop at ESORICS 2026](https://raise-workshop.github.io/).
+
+```bibtex
+@inproceedings{Stevanovic2026,
+  author = {Stevanovic, Oliver and Wachter, Jasmin},
+  title = {Automating Attack Graph Construction for Agentic Pentesting: Towards Neuro-Symbolic Vulnerability Hunting},
+  booktitle = {Proceedings of the RAISE Workshop at ESORICS},
+  year = {2026},
+  address = {Klagenfurt, Austria}
+}
+```
+
+## Acknowledgements
+
+We thank [takeoff30](https://github.com/takeoff30) for contributions to Hydra.
+Because this public repository was created as a clean, history-free release
+snapshot, those contributions are not represented in its Git commit history.
