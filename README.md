@@ -134,10 +134,10 @@ does not publish the `cai-framework` distribution.
 
 ## Reproducibility release
 
-The repository state used for the RAISE paper is pinned as the
-[Release RAISE paper](https://github.com/JasminWachter/Hydra/releases/tag/raise-paper-release)
-artifact. Use that release, rather than the moving `main` branch, when
-reproducing the published setup.
+The repository state used for the RAISE paper is pinned by the annotated
+[`raise-paper-release`](https://github.com/JasminWachter/Hydra/tree/raise-paper-release)
+tag. Use that tag, rather than the moving `main` branch, when reproducing the
+published setup.
 
 ## Citation
 
