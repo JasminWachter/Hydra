@@ -150,8 +150,7 @@ Pentesting: Towards Neuro-Symbolic Vulnerability Hunting*, presented at the
   author = {Stevanovic, Oliver and Wachter, Jasmin},
   title = {Automating Attack Graph Construction for Agentic Pentesting: Towards Neuro-Symbolic Vulnerability Hunting},
   booktitle = {Proceedings of the RAISE Workshop at ESORICS},
-  year = {2026},
-  address = {Klagenfurt, Austria}
+  year = {2026}
 }
 ```
 
