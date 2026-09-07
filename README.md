@@ -139,6 +139,22 @@ The repository state used for the RAISE paper is pinned by the annotated
 tag. Use that tag, rather than the moving `main` branch, when reproducing the
 published setup.
 
+As of September 7, 2026, CAI 0.5.5 remains available from PyPI and the exact
+upstream commit used by Hydra remains retrievable from GitHub when fetched
+explicitly by SHA. Because CAI's visible Git history was consolidated when the
+repository was archived, continued retention of that older Git object is not
+guaranteed. The container build therefore requests the exact commit directly.
+
+The non-yanked PyPI 0.5.5 artifacts provide an additional preservation source:
+
+- Wheel SHA-256: `3d5d2b26171d0a4f486c546ab7f3e4192ef1a478a9ac66813cfedf5ee736bfb9`
+- Source archive SHA-256: `c8cadb99c69285fb79fb5a9c2f4bf4f36b6c0d6a87564a950a2cc784a2ef1e7c`
+
+The Hydra patch was verified against upstream Git commit
+`6d47ccc2d282d6ec42243aa524019adb6bf48127`. Applying it to the PyPI source
+archive has not yet been verified; the PyPI archive should not be treated as a
+drop-in patching fallback until that check is completed.
+
 ## Citation
 
 Hydra accompanies the paper *Automating Attack Graph Construction for Agentic
