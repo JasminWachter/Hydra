@@ -2,7 +2,13 @@
 
 Hydra integrates MulVAL attack-path reasoning with the CAI cybersecurity agent
 framework. It combines scanner evidence, symbolic attack-graph generation, and
-agentic execution without redistributing the upstream CAI source tree.
+agentic execution without redistributing the upstream CAI source tree. 
+
+> [!IMPORTANT]
+> **Use :** This tool is strictly for authorized cybersecurity research, education, and defensive purposes only.
+> Unauthorized access to computer systems is a serious crime and
+> users assume full legal responsibility for their actions
+
 
 > [!IMPORTANT]
 > **CAI maintenance status:** The upstream CAI repository was archived on
