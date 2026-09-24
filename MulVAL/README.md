@@ -54,12 +54,23 @@ generate_predicates.py (UnifiedPipeline)
 | File | Use |
 |------|-----|
 | `kb/web_security_rules.P` | **Default KB** — 124 web-focused rules across the kill chain |
+| `kb/web_security_rules_positive.P` | Conservative positive-body variant of the default KB; disjunctions expanded and negation-dependent alternatives omitted |
 | `kb/full_post_exploit_rules.P` | Curated MITRE post-exploitation subset (future work — not loaded; see below) |
+| `kb/full_post_exploit_rules_positive.P` | Conservative positive-body variant of the curated subset |
 | `kb/full_interaction_rules.P` | 533 MITRE ATT&CK techniques (auto-generated, do not edit) |
+| `kb/full_interaction_rules_positive.P` | Conservative positive-body variant of the generated full rule set |
 
 `web_security_rules.P` is used **on its own** by default; `full_post_exploit_rules.P` is intentionally
 not combined (appending it breaks MulVAL derivation). Pass `--rules kb/full_interaction_rules.P` to
 override with the full MITRE rule set instead.
+
+The evaluated source rule sets remain unchanged for provenance. Files ending in
+`_positive.P` are generated monotonic positive-body variants: positive disjunctions are expanded into
+separate rules, while alternatives requiring negation-as-failure, Prolog cut, or unsafe head
+variables are omitted. They retain MulVAL/XSB wrappers, declarations, equality/disequality filters,
+and other supported built-ins, so “positive” describes their rule bodies rather than a standalone
+pure, function-free Datalog serialization. Regenerate them with
+`python kb/tools/generate_positive_variants.py` and see [`kb/README.md`](kb/README.md) for details.
 
 See **[`kb/README.md`](kb/README.md)** for the full rule inventory: the Semgrep evidence tiers, the
 input-predicate vocabulary, the 12-stage kill chain, and the per-class coverage matrix.

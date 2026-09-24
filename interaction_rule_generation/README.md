@@ -23,7 +23,7 @@ python3 interaction_rule_generation/nlp_pipeline/generate_full_kb.py
 
 ## Runtime Positioning
 
-For day-to-day runtime in this repository, the default ruleset remains:
+For day-to-day runtime in this repository, the default rule set remains:
 
 - `MulVAL/kb/web_security_rules.P`
 

@@ -179,5 +179,6 @@ Pentesting: Towards Neuro-Symbolic Vulnerability Hunting*, presented at the
 ## Acknowledgements
 
 We thank [takeoff30](https://github.com/takeoff30) for contributions to Hydra.
-Because this public repository was created as a clean, history-free release
-snapshot, those contributions are not represented in its Git commit history.
+Because this public repository is a clean, history-free release snapshot, its
+Git history does not preserve those contributions. The accompanying paper
+recognizes them through its first-author credit.
